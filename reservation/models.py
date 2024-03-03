@@ -14,6 +14,7 @@ class Room(models.Model):
 class Reservation(models.Model):
     room = models.ForeignKey('Room', on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, null=True)
     date = models.DateField()
     time = models.TimeField()
     note = models.TextField(blank=True, null=True)
