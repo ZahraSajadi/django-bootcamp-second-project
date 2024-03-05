@@ -5,15 +5,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0002_alter_customuser_managers_alter_customuser_email'),
+        ("users", "0002_alter_customuser_managers_alter_customuser_email"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='otp',
-            name='otp',
-            field=models.CharField(default=utils.db.model_helper.random_password, max_length=6),
+            model_name="otp",
+            name="otp",
+            field=models.CharField(
+                default=utils.db.model_helper.generate_otp, max_length=6
+            ),
         ),
     ]
