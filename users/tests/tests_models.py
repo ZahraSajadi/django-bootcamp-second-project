@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import Team, OTP, CustomUserManager
+from users.models import Team, OTP, CustomUserManager
 
 User = get_user_model()
 

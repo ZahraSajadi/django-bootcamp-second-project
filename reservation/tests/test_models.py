@@ -2,7 +2,7 @@ from datetime import time, date
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from .models import Reservation, Room, Rating, Comment
+from reservation.models import Reservation, Room, Rating, Comment
 from users.models import Team
 
 
