@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # local
-    "users.apps.UsersConfig",
+    "users",
     "reservation",
 ]
 
@@ -77,9 +77,9 @@ WSGI_APPLICATION = "second_project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "unChained",
+        "NAME": "postgres",
         "USER": "postgres",
-        "PASSWORD": "4542",
+        "PASSWORD": "postgres",
         "HOST": "localhost",
         "PORT": "5432",
     }
