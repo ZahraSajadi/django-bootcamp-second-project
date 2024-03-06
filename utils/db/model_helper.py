@@ -10,3 +10,8 @@ phone_regex = RegexValidator(
 def generate_otp(length=6):
     otp = "".join(random.choices("0123456789", k=length))
     return otp
+
+
+def user_image_path(instance, filename):
+    ext = filename.split(".")[-1]
+    return f"profile_images/user_{instance.id}.{ext}"
