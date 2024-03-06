@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     # local
     "users",
     "reservation",
+    "utils",
 ]
 
 MIDDLEWARE = [

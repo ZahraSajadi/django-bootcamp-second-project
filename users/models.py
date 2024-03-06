@@ -7,8 +7,8 @@ from utils.db.model_helper import generate_otp, phone_regex, user_image_path
 
 class CustomUser(AbstractUser):
     profile_image = models.ImageField(upload_to=user_image_path, blank=True, null=True)
-    phone = models.CharField(max_length=11, validators=[phone_regex])
-    team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True)
+    phone = models.CharField(max_length=11, validators=[phone_regex], unique=True)
+    team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
