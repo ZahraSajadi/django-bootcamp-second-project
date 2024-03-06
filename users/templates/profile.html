@@ -16,5 +16,6 @@
     <p>phone: {{ user.phone }}</p>
     <p>team: {{ user.team.name }}</p>
     <a href="{% url 'users:profile_update' %}"><button>Update Profile</button></a>
+    <a href="{% url 'users:change_password' %}"><button>Change Password</button></a>
 </body>
 </html>
