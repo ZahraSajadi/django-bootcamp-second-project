@@ -16,16 +16,16 @@ class RatingInlineAdmin(admin.TabularInline):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ("name", "capacity", "status")
-    list_filter = ("status",)
+    list_display = ("name", "capacity", "is_active")
+    list_filter = ("is_active",)
     search_fields = ("description__icontains",)
     inlines = [CommentInlineAdmin, RatingInlineAdmin]
 
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("room", "user", "team")
-    list_filter = ("room", "user", "team", "date")
+    list_display = ("room", "reserver_user", "team", "start_date", "end_date")
+    list_filter = ("room", "reserver_user", "team", "start_date", "end_date")
 
 
 @admin.register(Comment)
