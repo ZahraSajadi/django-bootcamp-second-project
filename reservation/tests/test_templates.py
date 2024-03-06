@@ -8,7 +8,7 @@ User = get_user_model()
 
 class RoomDetailViewTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_superuser(
+        self.user = User.objects.create_user(
             username="superuser",
             password="password",
             first_name="hossein",
@@ -36,7 +36,7 @@ class RoomDetailViewTest(TestCase):
         self.assertContains(response, f"Rating: {self.rate.value}")
         self.assertContains(
             response,
-            f'{self.comment.content} - {self.comment.user} - {self.comment.created_at.strftime("%-B %-d, %-Y, %-I:%-M")}',
+            f'{self.comment.content} - {self.comment.user} - {self.comment.created_at.strftime("%-B %-d, %-Y, %-I:%M")}',
         )
         self.assertNotContains(response, "Submit Rating")
         self.assertNotContains(response, "Add a Comment")
@@ -54,7 +54,7 @@ class RoomDetailViewTest(TestCase):
         self.assertContains(response, f"Rating: {self.rate.value}")
         self.assertContains(
             response,
-            f'{self.comment.content} - {self.comment.user} - {self.comment.created_at.strftime("%-B %-d, %-Y, %-I:%-M")}',
+            f'{self.comment.content} - {self.comment.user} - {self.comment.created_at.strftime("%-B %-d, %-Y, %-I:%M")}',
         )
         self.assertContains(response, "Submit Rating")
         self.assertContains(response, "Add a Comment")
