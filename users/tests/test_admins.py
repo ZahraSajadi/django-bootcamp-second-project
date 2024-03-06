@@ -66,6 +66,23 @@ class CustomUserAdminTest(TestCase):
         response = self.client.get("/admin/users/customuser/")
         self.assertEqual(response.status_code, 302)
 
+    def test_custom_user_model_admin_fieldtest(self):
+        self.client.login(username=self.super_user.username, password="password")
+        response = self.client.get(
+            f"/admin/users/customuser/{self.super_user.id}/change/"
+        )
+        self.assertContains(response, "Username:")
+        self.assertContains(response, "Password:")
+        self.assertContains(response, "Profile image:")
+        self.assertContains(response, "First name:")
+        self.assertContains(response, "Last name:")
+        self.assertContains(response, "Email address:")
+        self.assertContains(response, "Phone:")
+        self.assertContains(response, "Permissions")
+        self.assertContains(response, "Last login:")
+        self.assertContains(response, "Date joined:")
+        self.assertContains(response, "Team:")
+
 
 class TeamAdminTest(TestCase):
     def setUp(self):
@@ -102,6 +119,12 @@ class TeamAdminTest(TestCase):
         response = self.client.get("/admin/users/team/?q=one")
         self.assertContains(response, self.team1.name)
         self.assertNotContains(response, self.team2.name)
+
+    def test_team_model_admin_fieldtest(self):
+        self.client.login(username=self.super_user.username, password="password")
+        response = self.client.get(f"/admin/users/team/{self.team1.id}/change/")
+        self.assertContains(response, "Name:")
+        self.assertContains(response, self.team1)
 
 
 class OTPAdminTest(TestCase):
@@ -150,3 +173,10 @@ class OTPAdminTest(TestCase):
         response = self.client.get("/admin/users/otp/", data=filter_params)
         self.assertContains(response, self.otp1.otp)
         self.assertNotContains(response, self.otp2.otp)
+
+    def test_otpmodel_admin_fieldtest(self):
+        self.client.login(username=self.super_user.username, password="password")
+        response = self.client.get(f"/admin/users/otp/{self.otp1.id}/change/")
+        self.assertContains(response, "User:")
+        self.assertContains(response, "Otp:")
+        self.assertContains(response, self.otp1)
