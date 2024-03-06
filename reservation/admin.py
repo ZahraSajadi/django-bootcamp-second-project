@@ -18,7 +18,10 @@ class RatingInlineAdmin(admin.TabularInline):
 class RoomAdmin(admin.ModelAdmin):
     list_display = ("name", "capacity", "is_active")
     list_filter = ("is_active",)
-    search_fields = ("description__icontains",)
+    search_fields = (
+        "name__icontains",
+        "description__icontains",
+    )
     inlines = [CommentInlineAdmin, RatingInlineAdmin]
 
 
@@ -32,7 +35,7 @@ class ReservationAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("user", "room", "created_at", "short_content")
     list_filter = ("user", "room", "created_at")
-    search_fields = ("content",)
+    search_fields = ("content__icontains",)
 
     def short_content(self, obj: Comment):
         short_content = obj.content
