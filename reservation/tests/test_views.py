@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
-from reservation.models import Room, Comment
+from reservation.models import Room, Comment, Rating
 from reservation.views import RoomDetail, RatingSubmissionView, CommentSubmissionView
 
 User = get_user_model()
@@ -23,7 +23,7 @@ class RoomDetailViewTest(TestCase):
             phone="09123456789",
         )
         self.comment = Comment.objects.create(
-            room=self.room, content="Test comment", user=self.user
+            room=self.room, content="First comment", user=self.user
         )
 
     def test_room_detail_view(self):
@@ -54,14 +54,23 @@ class RoomDetailViewTest(TestCase):
         request.session = self.client.session
         response = RatingSubmissionView.as_view()(request, room_id=self.room.id)
         self.assertEqual(response.status_code, 302)
+        rate = Rating.objects.filter(user=self.user, room=self.room).first()
+        self.assertEqual(5, rate.value)
 
     def test_authenticated_user_can_submit_comment(self):
+        comment_content = "Test comment"
         self.client.login(username=self.user.username, password="password")
         request = self.factory.post(
             reverse("reservation:submit_comment", kwargs={"room_id": self.room.id}),
-            {"content": "Test comment"},
+            {"content": comment_content},
         )
         request.user = self.user
         request.session = self.client.session
         response = CommentSubmissionView.as_view()(request, room_id=self.room.id)
         self.assertEqual(response.status_code, 302)
+        comment = (
+            Comment.objects.filter(user=self.user, room=self.room)
+            .order_by("-created_at")
+            .first()
+        )
+        self.assertEqual(comment_content, comment.content)
