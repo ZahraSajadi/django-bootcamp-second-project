@@ -2,14 +2,14 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 
-from utils.db.model_helper import random_password
+from utils.db.model_helper import generate_otp, phone_regex
 
 
 class CustomUser(AbstractUser):
     profile_image = models.ImageField(
         upload_to="profile_images/", blank=True, null=True
     )
-    phone = models.CharField(max_length=11)
+    phone = models.CharField(max_length=11, validators=[phone_regex])
     team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True)
 
     def __str__(self):
@@ -25,7 +25,7 @@ class Team(models.Model):
 
 class OTP(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    otp = models.CharField(max_length=6, default=random_password)
+    otp = models.CharField(max_length=6, default=generate_otp)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
