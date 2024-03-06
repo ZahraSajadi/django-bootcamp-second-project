@@ -38,7 +38,7 @@ class Comment(models.Model):
 
 
 class Rating(models.Model):
-    value = models.PositiveSmallIntegerField(
+    value = models.SmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
