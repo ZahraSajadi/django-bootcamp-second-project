@@ -10,8 +10,8 @@ class CommentInlineAdmin(admin.TabularInline):
 
 class RatingInlineAdmin(admin.TabularInline):
     model = Rating
-    extra = 1
     show_change_link = True
+    extra = 1
 
 
 @admin.register(Room)
