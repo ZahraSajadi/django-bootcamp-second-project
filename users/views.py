@@ -1,6 +1,6 @@
 from django.urls import reverse
-from django.views.generic import DetailView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import get_user_model
 
@@ -40,3 +40,27 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
     def get_login_url(self):
         return reverse("users:login")
+
+
+class AdminUserListView(PermissionRequiredMixin, ListView): ...
+
+
+class AdminUserDetailView(PermissionRequiredMixin, DetailView): ...
+
+
+class AdminUserUpdateView(PermissionRequiredMixin, UpdateView): ...
+
+
+class AdminTeamListView(PermissionRequiredMixin, ListView): ...
+
+
+class AdminTeamDetailView(PermissionRequiredMixin, DetailView): ...
+
+
+class AdminTeamCreateView(PermissionRequiredMixin, CreateView): ...
+
+
+class AdminTeamUpdateView(PermissionRequiredMixin, UpdateView): ...
+
+
+class AdminTeamDeleteView(PermissionRequiredMixin, DeleteView): ...

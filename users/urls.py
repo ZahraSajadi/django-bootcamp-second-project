@@ -1,7 +1,19 @@
 from django.urls import path
 from django.contrib.auth.views import LoginView
 
-from .views import ProfileView, ProfileUpdateView, CustomPasswordChangeView
+from .views import (
+    AdminTeamCreateView,
+    AdminTeamDeleteView,
+    AdminTeamDetailView,
+    AdminTeamListView,
+    AdminTeamUpdateView,
+    AdminUserDetailView,
+    AdminUserListView,
+    AdminUserUpdateView,
+    ProfileView,
+    ProfileUpdateView,
+    CustomPasswordChangeView,
+)
 
 app_name = "users"
 
@@ -15,4 +27,12 @@ urlpatterns = [
         CustomPasswordChangeView.as_view(),
         name="change_password",
     ),
+    path("team/list", AdminTeamListView.as_view(), name="team_list"),
+    path("team/create", AdminTeamCreateView.as_view(), name="team_create"),
+    path("team/<int:pk>", AdminTeamDetailView.as_view(), name="team_detail"),
+    path("team/<int:pk>/update", AdminTeamUpdateView.as_view(), name="team_update"),
+    path("team/<int:pk>/delete", AdminTeamDeleteView.as_view(), name="team_delete"),
+    path("list/", AdminUserListView.as_view(), name="user_list"),
+    path("<int:pk>", AdminUserDetailView.as_view(), name="user_detail"),
+    path("<int:pk>/update", AdminUserUpdateView.as_view(), name="user_update"),
 ]

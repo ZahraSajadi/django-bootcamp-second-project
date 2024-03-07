@@ -1,9 +1,9 @@
 from typing import Any
 from django.contrib.auth import get_user
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import DetailView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from .models import Comment, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
 
@@ -48,3 +48,29 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         if comment_form.is_valid():
             comment_form.save()
         return redirect("reservation:room_detail", pk=room_id)
+
+
+class UserReservationsView(LoginRequiredMixin, ListView): ...
+
+
+class AdminRoomListView(PermissionRequiredMixin, ListView):
+    permission_required = "reservation.view_room"
+    model = Room
+
+
+class AdminRoomCreateView(PermissionRequiredMixin, CreateView): ...
+
+
+class AdminRoomUpdateView(PermissionRequiredMixin, UpdateView): ...
+
+
+class AdminRoomDeleteView(PermissionRequiredMixin, DeleteView): ...
+
+
+class AdminReservationListView(PermissionRequiredMixin, ListView): ...
+
+
+class AdminReservationDetailView(PermissionRequiredMixin, DetailView): ...
+
+
+class AdminReservationDeleteView(DeleteView): ...
