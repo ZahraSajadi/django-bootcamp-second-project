@@ -36,25 +36,25 @@ class Command(BaseCommand):
 
         # Admins
         content_type = ContentType.objects.get_for_model(Room)
-        view_room_list, created = Permission.objects.get_or_create(
+        can_view_room_list, created = Permission.objects.get_or_create(
             name="Can view rooms list",
             codename="view_room_list",
             content_type=content_type,
         )
         content_type = ContentType.objects.get_for_model(Reservation)
-        view_reservation_list, created = Permission.objects.get_or_create(
+        can_view_reservation_list, created = Permission.objects.get_or_create(
             name="Can view reservations list",
             codename="view_reservation_list",
             content_type=content_type,
         )
         content_type = ContentType.objects.get_for_model(User)
-        view_user_list, created = Permission.objects.get_or_create(
+        can_view_user_list, created = Permission.objects.get_or_create(
             name="Can view users list",
             codename="view_user_list",
             content_type=content_type,
         )
         content_type = ContentType.objects.get_for_model(Team)
-        view_team_list, created = Permission.objects.get_or_create(
+        can_view_team_list, created = Permission.objects.get_or_create(
             name="Can view teams list",
             codename="view_team_list",
             content_type=content_type,
@@ -77,10 +77,10 @@ class Command(BaseCommand):
         can_view_customuser = Permission.objects.get(codename="view_customuser")
         can_change_customuser = Permission.objects.get(codename="change_customuser")
 
-        admins_group.permissions.add(view_room_list)
-        admins_group.permissions.add(view_reservation_list)
-        admins_group.permissions.add(view_user_list)
-        admins_group.permissions.add(view_team_list)
+        admins_group.permissions.add(can_view_room_list)
+        admins_group.permissions.add(can_view_reservation_list)
+        admins_group.permissions.add(can_view_user_list)
+        admins_group.permissions.add(can_view_team_list)
         admins_group.permissions.add(can_add_team)
         admins_group.permissions.add(can_change_team)
         admins_group.permissions.add(can_delete_team)
