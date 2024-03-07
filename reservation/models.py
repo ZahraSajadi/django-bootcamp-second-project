@@ -1,37 +1,63 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-
-
-class Room(models.Model):
-    name = models.CharField(max_length=100)
-    capacity = models.PositiveIntegerField()
-    description = models.TextField()
-    status = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Reservation(models.Model):
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
-    team = models.ForeignKey("users.Team", on_delete=models.CASCADE, null=True)
-    date = models.DateField()
-    time = models.TimeField()
+    reserver_user = models.ForeignKey(
+        get_user_model(), on_delete=models.SET_NULL, null=True
+    )
+    team = models.ForeignKey("users.Team", on_delete=models.CASCADE)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
     note = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Reservation for {self.user.team.name} on {self.date} at {self.time}"
+        return f"Reservation for {self.team.name} on {self.start_date.strftime('%Y-%m-%d')} at {self.start_date.strftime('%H:%M:%S')} by {self.reserver_user}"
 
 
 class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Comment by {self.user} on {self.created_at} in Room {self.room}"
 
 
 class Rating(models.Model):
-    value = models.IntegerField()
-    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
+    value = models.SmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Rating {self.value} by {self.user} for Room {self.room}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "room"], name="unique_rating")
+        ]
+
+
+class Room(models.Model):
+    name = models.CharField(max_length=100)
+    capacity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    description = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_avg_rating(self) -> float:
+        avg_rate = (
+            Rating.objects.filter(room=self)
+            .aggregate(avg_rate=models.Avg("value"))
+            .get("avg_rate")
+        )
+        if not avg_rate:
+            avg_rate = 0
+        return avg_rate
