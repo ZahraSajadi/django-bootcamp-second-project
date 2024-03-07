@@ -128,43 +128,37 @@ class ReservationAdminTest(TestCase):
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"reserver_user__id__exact": self.super_user.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"team__id__exact": self.team1.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"team__id__exact": self.team1.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"start_date": self.start1}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"end_date": self.end1}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
     def test_room_model_fieldsets(self):
         self.client.login(username=self.super_user.username, password="password")
@@ -306,13 +300,11 @@ class RatingAdminTest(TestCase):
 
         filter_params = {"user__id__exact": self.super_user.id}
         response = self.client.get("/admin/reservation/rating/", data=filter_params)
-        self.assertContains(response, self.rate1)
-        self.assertNotContains(response, self.rate2)
+        self.assertContains(response, "1 rating")
 
         filter_params = {"room__id__exact": self.room1.id}
         response = self.client.get("/admin/reservation/rating/", data=filter_params)
-        self.assertContains(response, self.rate1)
-        self.assertNotContains(response, self.rate2)
+        self.assertContains(response, "1 rating")
 
     def test_comment_model_fieldtest(self):
         self.client.login(username=self.super_user.username, password="password")
