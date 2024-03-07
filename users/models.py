@@ -14,6 +14,17 @@ class CustomUser(AbstractUser):
     team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True, blank=True)
     REQUIRED_FIELDS = ["first_name", "last_name", "email", "phone"]
 
+    class Meta:
+        permissions = [
+            ("add_reservation_self_team", "Can add reservation to their team"),
+            ("change_reservation_self_team", "Can change reservation of their team"),
+            ("delete_reservation_self_team", "Can delete reservation of their team"),
+            ("view_room_list", "Can view rooms list"),
+            ("view_reservation_list", "Can view reservations list"),
+            ("view_customuser_list", "Can view users list"),
+            ("view_team_list", "Can view teams list"),
+        ]
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
