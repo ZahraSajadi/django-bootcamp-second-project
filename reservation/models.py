@@ -3,16 +3,6 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-class Room(models.Model):
-    name = models.CharField(max_length=100)
-    capacity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    description = models.TextField()
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
-
-
 class Reservation(models.Model):
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
     reserver_user = models.ForeignKey(
@@ -51,3 +41,23 @@ class Rating(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["user", "room"], name="unique_rating")
         ]
+
+
+class Room(models.Model):
+    name = models.CharField(max_length=100)
+    capacity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    description = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_avg_rating(self) -> float:
+        avg_rate = (
+            Rating.objects.filter(room=self)
+            .aggregate(avg_rate=models.Avg("value"))
+            .get("avg_rate")
+        )
+        if not avg_rate:
+            avg_rate = 0
+        return avg_rate

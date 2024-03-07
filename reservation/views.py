@@ -1,7 +1,6 @@
 from typing import Any
 from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Avg
 from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import DetailView
@@ -15,11 +14,7 @@ class RoomDetail(DetailView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        avg_rating = Rating.objects.filter(room=self.object).aggregate(
-            avg_rate=Avg("value")
-        )["avg_rate"]
-        if not avg_rating:
-            avg_rating = 0
+        avg_rating = self.object.get_avg_rating()
         context["rate"] = avg_rating
         context["comments"] = Comment.objects.filter(room=self.object).all()
         context["room_id"] = self.kwargs.get("pk")
