@@ -13,12 +13,20 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         return self.request.user
 
+    def get_login_url(self):
+        return reverse("users:login")
+
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = get_user_model()
     fields = ["username", "first_name", "last_name", "email", "phone", "profile_image"]
     template_name = "profile_update.html"
-    success_url = reverse("users:profile")
+
+    def get_success_url(self):
+        return reverse("users:profile")
+
+    def get_login_url(self):
+        return reverse("users:login")
 
     def get_object(self, queryset=None):
         return self.request.user
@@ -26,4 +34,9 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "change_password.html"
-    success_url = reverse("users:profile")
+
+    def get_success_url(self):
+        return reverse("users:profile")
+
+    def get_login_url(self):
+        return reverse("users:login")
