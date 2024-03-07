@@ -10,7 +10,7 @@ from .forms import SubmitCommentForm, SubmitRatingForm
 
 class RoomDetail(DetailView):
     model = Room
-    template_name = "room_detail.html"
+    template_name = "reservation/room_detail.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)

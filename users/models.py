@@ -23,13 +23,13 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    @property
-    def is_team_leader(self):
-        return self.groups.filter(name="Team Leader").exists()
+    # @property
+    # def is_team_leader(self):
+    #     return self.groups.filter(name="Team Leader").exists()
 
-    @property
-    def is_admin(self):
-        return self.groups.filter(name="Admins").exists()
+    # @property
+    # def is_admin(self):
+    #     return self.groups.filter(name="Admins").exists()
 
 
 class Team(models.Model):
