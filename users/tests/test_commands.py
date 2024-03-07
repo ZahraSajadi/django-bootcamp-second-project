@@ -28,6 +28,7 @@ class YourCommandTestCase(TestCase):
             "change_room",
             "delete_room",
             "view_room",
+            "add_reservation",
             "delete_reservation",
             "view_reservation",
             "view_customuser",
