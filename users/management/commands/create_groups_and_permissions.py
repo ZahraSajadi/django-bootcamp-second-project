@@ -12,11 +12,9 @@ class Command(BaseCommand):
 
         # Team Leaders
         add_reservation_self_team = Permission.objects.get(codename="add_reservation_self_team")
-        change_reservation_self_team = Permission.objects.get(codename="change_reservation_self_team")
         delete_reservation_self_team = Permission.objects.get(codename="delete_reservation_self_team")
 
         team_leaders_group.permissions.add(add_reservation_self_team)
-        team_leaders_group.permissions.add(change_reservation_self_team)
         team_leaders_group.permissions.add(delete_reservation_self_team)
 
         # Admins
@@ -24,27 +22,19 @@ class Command(BaseCommand):
         can_change_team = Permission.objects.get(codename="change_team")
         can_delete_team = Permission.objects.get(codename="delete_team")
         can_view_team = Permission.objects.get(codename="view_team")
-        can_view_team_list = Permission.objects.get(codename="view_team_list")
 
         can_add_room = Permission.objects.get(codename="add_room")
         can_change_room = Permission.objects.get(codename="change_room")
         can_delete_room = Permission.objects.get(codename="delete_room")
         can_view_room = Permission.objects.get(codename="view_room")
-        can_view_room_list = Permission.objects.get(codename="view_room_list")
 
         can_add_reservation = Permission.objects.get(codename="add_reservation")
         can_delete_reservation = Permission.objects.get(codename="delete_reservation")
         can_view_reservation = Permission.objects.get(codename="view_reservation")
-        can_view_reservation_list = Permission.objects.get(codename="view_reservation_list")
 
         can_view_customuser = Permission.objects.get(codename="view_customuser")
         can_change_customuser = Permission.objects.get(codename="change_customuser")
-        can_view_user_list = Permission.objects.get(codename="view_customuser_list")
 
-        admins_group.permissions.add(can_view_room_list)
-        admins_group.permissions.add(can_view_reservation_list)
-        admins_group.permissions.add(can_view_user_list)
-        admins_group.permissions.add(can_view_team_list)
         admins_group.permissions.add(can_add_team)
         admins_group.permissions.add(can_change_team)
         admins_group.permissions.add(can_delete_team)
