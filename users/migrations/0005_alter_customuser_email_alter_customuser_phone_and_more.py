@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             model_name="customuser",
             name="email",
             field=models.EmailField(
-                blank=True, max_length=254, verbose_name="email address"
+                max_length=254, unique=True, verbose_name="email address"
             ),
         ),
         migrations.AlterField(
