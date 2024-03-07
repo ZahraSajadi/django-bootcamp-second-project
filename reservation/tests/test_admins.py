@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from warnings import filterwarnings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from reservation.models import Comment, Rating, Reservation, Room
 from users.models import Team
@@ -11,6 +12,7 @@ User = get_user_model()
 
 class RoomAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -64,6 +66,7 @@ class RoomAdminTest(TestCase):
 
 class ReservationAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.team1 = Team.objects.create(name="one")
         self.team2 = Team.objects.create(name="two")
         self.super_user = User.objects.create_superuser(
@@ -175,6 +178,7 @@ class ReservationAdminTest(TestCase):
 
 class CommentAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -260,6 +264,7 @@ class CommentAdminTest(TestCase):
 
 class RatingAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",

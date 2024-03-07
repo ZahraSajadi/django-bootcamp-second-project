@@ -31,13 +31,19 @@ class YourCommandTestCase(TestCase):
             "add_team",
             "change_team",
             "delete_team",
+            "view_team",
+            "view_team_list",
             "add_room",
             "change_room",
             "delete_room",
-            "add_reservation",
-            "change_reservation",
+            "view_room",
+            "view_room_list",
             "delete_reservation",
-            "change_team",
+            "view_reservation",
+            "view_reservation_list",
+            "view_customuser",
+            "view_customuser_list",
+            "change_customuser",
         ]
 
         for perm_codename in admin_permissions:

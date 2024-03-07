@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from reservation.models import Rating, Room, Comment
@@ -8,6 +9,7 @@ User = get_user_model()
 
 class RoomDetailViewTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.user = User.objects.create_user(
             username="superuser",
             password="password",

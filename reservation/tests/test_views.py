@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.core.management import call_command
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from reservation.models import Room, Comment, Rating
@@ -10,6 +11,7 @@ User = get_user_model()
 
 class RoomDetailViewTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.factory = RequestFactory()
         self.room = Room.objects.create(
             name="Test Room", capacity=5, description="Test description", is_active=True
