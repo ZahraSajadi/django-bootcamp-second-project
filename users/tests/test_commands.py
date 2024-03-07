@@ -13,15 +13,9 @@ class YourCommandTestCase(TestCase):
         admins_group = Group.objects.get(name="Admins")
         self.assertIsNotNone(admins_group)
 
-        add_reservation_perm = Permission.objects.get(
-            codename="add_reservation_self_team"
-        )
-        change_reservation_perm = Permission.objects.get(
-            codename="change_reservation_self_team"
-        )
-        delete_reservation_perm = Permission.objects.get(
-            codename="delete_reservation_self_team"
-        )
+        add_reservation_perm = Permission.objects.get(codename="add_reservation_self_team")
+        change_reservation_perm = Permission.objects.get(codename="change_reservation_self_team")
+        delete_reservation_perm = Permission.objects.get(codename="delete_reservation_self_team")
 
         self.assertIn(add_reservation_perm, team_leaders_group.permissions.all())
         self.assertIn(change_reservation_perm, team_leaders_group.permissions.all())
