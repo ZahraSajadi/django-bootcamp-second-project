@@ -13,5 +13,12 @@
     console.log('hiii')
     {% block script %}{% endblock %}
 </script>
+
+{% block back_button %}
+
+<button style="margin-top:10px;" onclick="window.history.back()">Back</button>
+
+{% endblock back_button %}
+
 </body>
 </html>
