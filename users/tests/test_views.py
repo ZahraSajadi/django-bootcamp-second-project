@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ User = get_user_model()
 
 class ProfileViewTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.client = Client()
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
@@ -30,6 +32,7 @@ class ProfileViewTest(TestCase):
 
 class PasswordUpdateViewTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.client = Client()
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
@@ -59,6 +62,7 @@ class PasswordUpdateViewTest(TestCase):
 
 class ProfileUpdateViewTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.url = reverse("users:profile_update")
         # self.factory = RequestFactory()
         self.client = Client()

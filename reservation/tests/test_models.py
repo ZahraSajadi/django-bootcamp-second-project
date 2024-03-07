@@ -1,4 +1,5 @@
 from datetime import date
+from django.core.management import call_command
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -10,6 +11,7 @@ from users.models import Team
 class RoomModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
+        call_command("create_groups_and_permissions")
         # Set up non-modified objects used by all test methods
         Room.objects.create(
             name="Room 1", capacity=3, description="Test room 1", is_active=True
@@ -50,6 +52,7 @@ class RoomModelTest(TestCase):
 class ReservationModelTest(TestCase):
     @classmethod
     def setUp(self):
+        call_command("create_groups_and_permissions")
         # Set up non-modified objects used by all test methods
         self.room = Room.objects.create(
             name="Test Room", capacity=5, description="Test room", is_active=True
@@ -140,6 +143,7 @@ class ReservationModelTest(TestCase):
 
 class CommentModelTestCase(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.user = get_user_model().objects.create_user(
             username="TestUser",
             email="test@example.com",
@@ -174,6 +178,7 @@ class CommentModelTestCase(TestCase):
 
 class RatingModelTestCase(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.user = get_user_model().objects.create_user(
             username="TestUser",
             email="test@example.com",

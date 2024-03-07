@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from warnings import filterwarnings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from users.models import OTP, Team
 
@@ -11,6 +12,7 @@ User = get_user_model()
 
 class CustomUserAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -86,6 +88,7 @@ class CustomUserAdminTest(TestCase):
 
 class TeamAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.team1 = Team.objects.create(name="team_one")
         self.team2 = Team.objects.create(name="team_two")
         self.super_user = User.objects.create_superuser(
@@ -129,6 +132,7 @@ class TeamAdminTest(TestCase):
 
 class OTPAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",

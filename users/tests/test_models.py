@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ User = get_user_model()
 
 class CustomUserModelTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.team = Team.objects.create(name="Test Team")
         self.user = User.objects.create_user(
             username="TestUser",
@@ -45,15 +47,21 @@ class CustomUserModelTest(TestCase):
     def test_user_str_representation(self):
         self.assertEqual(str(self.user), "John Doe")
 
+    def test_createsuperuser_groups(self):
+        superuser = User.objects.create_superuser(username="admin", password="password")
+        self.assertTrue(superuser.groups.filter(name="Admins").exists())
+
 
 class TeamModelTest(TestCase):
     def test_create_team(self):
+        call_command("create_groups_and_permissions")
         team = Team.objects.create(name="Test Team")
         self.assertEqual(team.name, "Test Team")
 
 
 class OTPModelTestCase(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         # Create a user for testing
         self.user = get_user_model().objects.create_user(
             username="Test User",
