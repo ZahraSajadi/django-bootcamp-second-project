@@ -50,7 +50,7 @@ class Command(BaseCommand):
         content_type = ContentType.objects.get_for_model(User)
         can_view_user_list, created = Permission.objects.get_or_create(
             name="Can view users list",
-            codename="view_user_list",
+            codename="view_customuser_list",
             content_type=content_type,
         )
         content_type = ContentType.objects.get_for_model(Team)
