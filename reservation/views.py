@@ -8,7 +8,7 @@ from .models import Comment, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
 
 
-class RoomDetail(DetailView):
+class RoomDetailView(DetailView):
     model = Room
     template_name = "reservation/room_detail.html"
 

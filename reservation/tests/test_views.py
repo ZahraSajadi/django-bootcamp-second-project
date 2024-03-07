@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from reservation.models import Room, Comment, Rating
-from reservation.views import RoomDetail, RatingSubmissionView, CommentSubmissionView
+from reservation.views import RoomDetailView, RatingSubmissionView, CommentSubmissionView
 
 User = get_user_model()
 
@@ -13,9 +13,7 @@ class RoomDetailViewTest(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         self.factory = RequestFactory()
-        self.room = Room.objects.create(
-            name="Test Room", capacity=5, description="Test description", is_active=True
-        )
+        self.room = Room.objects.create(name="Test Room", capacity=5, description="Test description", is_active=True)
         self.user = User.objects.create_user(
             username="superuser",
             password="password",
@@ -24,16 +22,12 @@ class RoomDetailViewTest(TestCase):
             email="test@noemail.invalid",
             phone="09123456789",
         )
-        self.comment = Comment.objects.create(
-            room=self.room, content="First comment", user=self.user
-        )
+        self.comment = Comment.objects.create(room=self.room, content="First comment", user=self.user)
 
     def test_room_detail_view(self):
-        request = self.factory.get(
-            reverse("reservation:room_detail", kwargs={"pk": self.room.id})
-        )
+        request = self.factory.get(reverse("reservation:room_detail", kwargs={"pk": self.room.id}))
         request.user = AnonymousUser()
-        response = RoomDetail.as_view()(request, pk=self.room.id)
+        response = RoomDetailView.as_view()(request, pk=self.room.id)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.room.name)
         self.assertContains(response, f"Capacity: {self.room.capacity}")
@@ -70,9 +64,5 @@ class RoomDetailViewTest(TestCase):
         request.session = self.client.session
         response = CommentSubmissionView.as_view()(request, room_id=self.room.id)
         self.assertEqual(response.status_code, 302)
-        comment = (
-            Comment.objects.filter(user=self.user, room=self.room)
-            .order_by("-created_at")
-            .first()
-        )
+        comment = Comment.objects.filter(user=self.user, room=self.room).order_by("-created_at").first()
         self.assertEqual(comment_content, comment.content)
