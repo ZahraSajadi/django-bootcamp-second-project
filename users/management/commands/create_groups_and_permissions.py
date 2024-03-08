@@ -1,14 +1,15 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
+from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        team_leaders_group, created = Group.objects.get_or_create(name="Team Leaders")
-        admins_group, created = Group.objects.get_or_create(name="Admins")
+        team_leaders_group, created = Group.objects.get_or_create(name=TEAM_LEADERS_GROUP_NAME)
+        admins_group, created = Group.objects.get_or_create(name=ADMINS_GROUP_NAME)
 
         # Team Leaders
         add_reservation_self_team = Permission.objects.get(codename="add_reservation_self_team")
