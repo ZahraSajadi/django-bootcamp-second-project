@@ -1,3 +1,7 @@
-{% extends "_base.html" %}
-{% block title %}{% endblock title %}
-{% block body %}{% endblock body %}
+{% extends "_base.html" %} {% block title %}{% endblock title %} {% block body
+%} {% block content %}
+<form method="post">
+  {% csrf_token %} {{ form.as_p }}
+  <button type="submit">Send OTP</button>
+</form>
+{% endblock %} {% endblock body %}

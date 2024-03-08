@@ -1,7 +1,7 @@
 from django import forms
 
 
-class LoginForm(forms.Form):
+class PhoneLoginForm(forms.Form):
     phone = forms.CharField(
         label="",
         required=True,
