@@ -33,7 +33,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
         self.fields["leader"].limit_choices_to = {"team__id": self.instance.pk}
         if self.instance and self.instance.pk:
             team_members = self.instance.customuser_set.all()
-            self.fields["members"].initial = team_members
+            self.fields["members"].initial = set(team_members)
             self.fields["leader"].initial = self.instance.get_leader()
 
     def save(self, commit=True):
@@ -42,7 +42,8 @@ class TeamCreateUpdateForm(forms.ModelForm):
         previous_leader = self.fields["leader"].initial
         leader = self.cleaned_data.get("leader")
         members = set(self.cleaned_data["members"])
-        current_members = set(team.customuser_set.all())
+        current_members = self.fields["members"].initial
+        current_members = current_members if current_members else set()
         new_members = members - current_members
         removed_members = current_members - members - {leader}
         for member in new_members:
