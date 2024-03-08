@@ -34,7 +34,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             team_members = self.instance.customuser_set.all()
             self.fields["members"].initial = team_members
-            self.fields["leader"].initial = self.instance.leader
+            self.fields["leader"].initial = self.instance.get_leader()
 
     def save(self, commit=True):
         team = super().save(commit=commit)

@@ -30,8 +30,7 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def leader(self):
+    def get_leader(self):
         return self.customuser_set.filter(groups__name=TEAM_LEADERS_GROUP_NAME).first()
 
 
