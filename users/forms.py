@@ -57,6 +57,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
 
             for user in current_members - members:
                 user.team = None
+                team_leader_group.user_set.remove(user)
                 if commit:
                     user.save()
         return team

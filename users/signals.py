@@ -1,7 +1,7 @@
 import os
 
 from django.contrib.auth.models import Group
-from second_project.settings import ADMINS_GROUP_NAME
+from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
 
 def delete_old_file(sender, instance, **kwargs):
@@ -29,3 +29,9 @@ def add_superuser_to_custom_group(sender, instance, created, **kwargs):
     if created and instance.is_superuser:
         custom_group = Group.objects.get(name=ADMINS_GROUP_NAME)
         instance.groups.add(custom_group)
+
+
+def team_pre_delete(sender, instance, **kwargs):
+    team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+    team_leader = instance.customuser_set.filter(groups=team_leader_group).first()
+    team_leader_group.user_set.remove(team_leader)
