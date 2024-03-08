@@ -1,11 +1,12 @@
 from typing import Any
 from django.contrib.auth import get_user
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from .models import Comment, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
+from users.mixins import CustomPermReqMixin
 
 
 class RoomDetailView(DetailView):
@@ -53,24 +54,24 @@ class CommentSubmissionView(LoginRequiredMixin, View):
 class UserReservationsView(LoginRequiredMixin, ListView): ...
 
 
-class RoomListView(PermissionRequiredMixin, ListView):
+class RoomListView(CustomPermReqMixin, ListView):
     permission_required = "reservation.view_room"
     model = Room
 
 
-class RoomCreateView(PermissionRequiredMixin, CreateView): ...
+class RoomCreateView(CustomPermReqMixin, CreateView): ...
 
 
-class RoomUpdateView(PermissionRequiredMixin, UpdateView): ...
+class RoomUpdateView(CustomPermReqMixin, UpdateView): ...
 
 
-class RoomDeleteView(PermissionRequiredMixin, DeleteView): ...
+class RoomDeleteView(CustomPermReqMixin, DeleteView): ...
 
 
-class ReservationListView(PermissionRequiredMixin, ListView): ...
+class ReservationListView(CustomPermReqMixin, ListView): ...
 
 
-class ReservationDetailView(PermissionRequiredMixin, DetailView): ...
+class ReservationDetailView(CustomPermReqMixin, DetailView): ...
 
 
 class ReservationDeleteView(UserPassesTestMixin, DeleteView): ...
