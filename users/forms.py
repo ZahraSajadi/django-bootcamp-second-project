@@ -39,7 +39,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
     def save(self, commit=True):
         team = super().save(commit=commit)
         team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
-        previous_leader = team.customuser_set.filter(groups=team_leader_group).first()
+        previous_leader = self.fields["leader"].initial
         leader = self.cleaned_data.get("leader")
         members = set(self.cleaned_data["members"])
         current_members = set(team.customuser_set.all())
