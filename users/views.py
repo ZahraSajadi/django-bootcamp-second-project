@@ -1,12 +1,16 @@
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import get_user_model
+from .models import Team
+from .forms import TeamCreateUpdateForm
+
+User = get_user_model()
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
-    model = get_user_model()
+    model = User
     template_name = "users/profile.html"
     context_object_name = "user"
 
@@ -18,7 +22,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = get_user_model()
+    model = User
     fields = ["username", "first_name", "last_name", "email", "phone", "profile_image"]
     template_name = "users/profile_update.html"
 
@@ -51,16 +55,29 @@ class UserDetailView(PermissionRequiredMixin, DetailView): ...
 class UserUpdateView(PermissionRequiredMixin, UpdateView): ...
 
 
-class TeamListView(PermissionRequiredMixin, ListView): ...
+class TeamListView(PermissionRequiredMixin, ListView):
+    permission_required = "users.view_team"
+    model = Team
+    ordering = ["id"]
 
 
-class TeamDetailView(PermissionRequiredMixin, DetailView): ...
+class TeamCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "users.add_team"
+    model = Team
+    form_class = TeamCreateUpdateForm
+    template_name = "users/team_create.html"
+    success_url = reverse_lazy("users:team_list")
 
 
-class TeamCreateView(PermissionRequiredMixin, CreateView): ...
+class TeamUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = ["users.change_team", "users.view_team"]
+    model = Team
+    form_class = TeamCreateUpdateForm
+    template_name = "users/team_update.html"
+    success_url = reverse_lazy("users:team_list")
 
 
-class TeamUpdateView(PermissionRequiredMixin, UpdateView): ...
-
-
-class TeamDeleteView(PermissionRequiredMixin, DeleteView): ...
+class TeamDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = "users.delete_team"
+    model = Team
+    success_url = reverse_lazy("users:team_list")

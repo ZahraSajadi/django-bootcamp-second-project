@@ -1,16 +1,17 @@
 from django.core.management import call_command
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase
+from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
 
 class YourCommandTestCase(TestCase):
     def test_command_execution(self):
         call_command("create_groups_and_permissions")
 
-        team_leaders_group = Group.objects.get(name="Team Leaders")
+        team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
         self.assertIsNotNone(team_leaders_group)
 
-        admins_group = Group.objects.get(name="Admins")
+        admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
         self.assertIsNotNone(admins_group)
 
         add_reservation_perm = Permission.objects.get(codename="add_reservation_self_team")

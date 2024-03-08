@@ -1,0 +1,12 @@
+{% extends "_base.html" %} {% block title %}Update Team{% endblock title %}
+{% block body %}
+<h1>{% block body_title %}
+  Create New Team
+  {% endblock body_title %}</h1>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %} {{ form.as_p }}
+  {% block submit_button %}
+  <button type="submit">Create</button>
+  {% endblock submit_button %}
+</form>
+{% endblock body %}

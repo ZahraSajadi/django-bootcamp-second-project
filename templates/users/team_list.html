@@ -1,0 +1,20 @@
+{% extends "_base.html" %}
+{% block title %}Teams List{% endblock title %}
+{% block body %}
+<h1>Teams</h1>
+<ul>
+{% for team in object_list %}
+<p>
+    <li>Id: {{ team.id }} - Name: {{ team.name }} - Team Leader: {{team.leader}}
+        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'">Details</button>
+        {% comment %} <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'">Update</button> {% endcomment %}
+        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_delete" team.id %}'">Delete</button>
+    </li>
+</p>
+{% empty %}
+    <li>No Team yet.</li>
+{% endfor %}
+
+<button style="margin-top:10px;" onclick="location.href='{% url "users:team_create" %}'">Create New Team</button>
+</ul>
+{% endblock body %}

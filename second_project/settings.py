@@ -132,3 +132,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
 LOGIN_URL = "users:login"
+ADMINS_GROUP_NAME = "Admins"
+TEAM_LEADERS_GROUP_NAME = "Team Leaders"

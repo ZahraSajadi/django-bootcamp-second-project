@@ -4,7 +4,6 @@ from django.contrib.auth.views import LoginView
 from .views import (
     TeamCreateView,
     TeamDeleteView,
-    TeamDetailView,
     TeamListView,
     TeamUpdateView,
     UserDetailView,
@@ -29,7 +28,6 @@ urlpatterns = [
     ),
     path("team/list", TeamListView.as_view(), name="team_list"),
     path("team/create", TeamCreateView.as_view(), name="team_create"),
-    path("team/<int:pk>", TeamDetailView.as_view(), name="team_detail"),
     path("team/<int:pk>/update", TeamUpdateView.as_view(), name="team_update"),
     path("team/<int:pk>/delete", TeamDeleteView.as_view(), name="team_delete"),
     path("list/", UserListView.as_view(), name="user_list"),
