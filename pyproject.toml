@@ -26,6 +26,6 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
-    "__pychache__",
+    "__pycache__",
 ]
 line-length = 120
