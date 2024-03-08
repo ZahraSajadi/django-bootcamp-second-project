@@ -21,10 +21,7 @@ class CustomUser(AbstractUser):
         ]
 
     def __str__(self):
-        text = f"{self.first_name} {self.last_name}"
-        if self.team:
-            return f"{text} - {self.team}"
-        return text
+        return f"{self.first_name} {self.last_name}"
 
 
 class Team(models.Model):

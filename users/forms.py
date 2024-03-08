@@ -7,8 +7,16 @@ from second_project.settings import TEAM_LEADERS_GROUP_NAME
 User = get_user_model()
 
 
+class UserMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        text = f"{obj}"
+        if obj.team:
+            text = f"{text} - {obj.team}"
+        return text
+
+
 class TeamCreateUpdateForm(forms.ModelForm):
-    members = forms.ModelMultipleChoiceField(
+    members = UserMultipleChoiceField(
         queryset=User.objects.order_by("id").all(),
         required=False,
         label="Members",
