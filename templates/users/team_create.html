@@ -5,6 +5,7 @@
   {% endblock body_title %}</h1>
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %} {{ form.as_p }}
+  <p><small>Note: Team Leader will be added to team members even of it is not selected in team members</small></p>
   {% block submit_button %}
   <button type="submit">Create</button>
   {% endblock submit_button %}

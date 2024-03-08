@@ -22,7 +22,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
         label="Members",
         widget=forms.CheckboxSelectMultiple,
     )
-    leader = forms.ModelChoiceField(queryset=User.objects.none(), required=False, label="Team Leader")
+    leader = forms.ModelChoiceField(queryset=User.objects.all(), required=False, label="Team Leader")
 
     class Meta:
         model = Team
@@ -30,34 +30,36 @@ class TeamCreateUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["leader"].limit_choices_to = {"team__id": self.instance.pk}
         if self.instance and self.instance.pk:
             team_members = self.instance.customuser_set.all()
-            self.fields["leader"].queryset = team_members
             self.fields["members"].initial = team_members
             self.fields["leader"].initial = self.instance.leader
 
     def save(self, commit=True):
         team = super().save(commit=commit)
+        team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        previous_leader = team.customuser_set.filter(groups=team_leader_group).first()
+        leader = self.cleaned_data.get("leader")
+        members = set(self.cleaned_data["members"])
+        current_members = set(team.customuser_set.all())
+        new_members = members - current_members
+        removed_members = current_members - members - {leader}
+        for member in new_members:
+            member.team = team
+        for user in removed_members:
+            user.team = None
+        if leader != previous_leader and leader:
+            leader.team = team
         if commit:
-            team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
-            previous_leader = team.customuser_set.filter(groups=team_leader_group).first()
-            leader = self.cleaned_data.get("leader")
-            if leader != previous_leader:
-                if previous_leader:
-                    team_leader_group.user_set.remove(previous_leader)
-                if leader:
-                    team_leader_group.user_set.add(leader)
-            members = set(self.cleaned_data["members"])
-            current_members = set(team.customuser_set.all())
-
-            for member in members - current_members:
-                member.team = team
-                if commit:
-                    member.save()
-
-            for user in current_members - members:
-                user.team = None
-                team_leader_group.user_set.remove(user)
-                if commit:
-                    user.save()
+            for member in new_members:
+                member.save()
+            for user in removed_members:
+                user.save()
+        if leader != previous_leader:
+            if previous_leader:
+                team_leader_group.user_set.remove(previous_leader)
+            if leader:
+                team_leader_group.user_set.add(leader)
+                leader.save()
         return team
