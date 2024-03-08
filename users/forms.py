@@ -35,6 +35,8 @@ class TeamCreateUpdateForm(forms.ModelForm):
             team_members = self.instance.customuser_set.all()
             self.fields["members"].initial = set(team_members)
             self.fields["leader"].initial = self.instance.get_leader()
+        else:
+            self.fields["members"].initial = set()
 
     def save(self, commit=True):
         team = super().save(commit=commit)
@@ -43,7 +45,6 @@ class TeamCreateUpdateForm(forms.ModelForm):
         leader = self.cleaned_data.get("leader")
         members = set(self.cleaned_data["members"])
         current_members = self.fields["members"].initial
-        current_members = current_members if current_members else set()
         new_members = members - current_members
         removed_members = current_members - members - {leader}
         for member in new_members:
