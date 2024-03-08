@@ -58,9 +58,9 @@ class TeamCreateUpdateForm(forms.ModelForm):
                 member.save()
             for user in removed_members:
                 user.save()
-        if leader != previous_leader:
-            team_leader_group.user_set.remove(previous_leader)
-            if leader:
-                team_leader_group.user_set.add(leader)
-                leader.save()
+            if leader != previous_leader:
+                team_leader_group.user_set.remove(previous_leader)
+                if leader:
+                    team_leader_group.user_set.add(leader)
+                    leader.save()
         return team
