@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+{% block title %}Rooms List{% endblock title %}
+{% block body %}
+<h1>Rooms</h1>
+<ul>
+{% for room in object_list %}
+<p>
+    <a href="{% url "reservation:room_detail" room.id %}">Id: {{ room.id }} - Name: {{ room.name }} - Capacity: {{ room.capacity }}</a>
+</p>
+{% empty %}
+    <li>No Room yet.</li>
+{% endfor %}
+</ul>
+{% endblock body %}

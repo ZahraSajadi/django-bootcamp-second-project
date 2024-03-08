@@ -55,8 +55,8 @@ class Room(models.Model):
     def get_avg_rating(self) -> float:
         avg_rate = (
             Rating.objects.filter(room=self)
-            .aggregate(avg_rate=models.Avg("value"))
-            .get("avg_rate")
+                .aggregate(avg_rate=models.Avg("value"))
+                .get("avg_rate")
         )
         if not avg_rate:
             avg_rate = 0

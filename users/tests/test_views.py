@@ -11,16 +11,14 @@ class ProfileViewTest(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword"
-        )
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
         self.url = reverse("users:profile")
 
     def test_profile_view_authenticated(self):
         self.client.login(username="testuser", password="testpassword")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "profile.html")
+        self.assertTemplateUsed(response, "users/profile.html")
         self.assertEqual(response.context["user"], self.user)
 
     def test_profile_view_unauthenticated(self):
@@ -34,9 +32,7 @@ class PasswordUpdateViewTest(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         self.client = Client()
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword"
-        )
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
         self.url = reverse("users:change_password")
 
     def test_password_change_view(self):
@@ -44,7 +40,7 @@ class PasswordUpdateViewTest(TestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "change_password.html")
+        self.assertTemplateUsed(response, "users/change_password.html")
 
     def test_password_change_view_post(self):
         self.client.login(username="testuser", password="testpassword")
@@ -83,7 +79,7 @@ class ProfileUpdateViewTest(TestCase):
         self.client.login(username="testuser", password="testpassword")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "profile_update.html")
+        self.assertTemplateUsed(response, "users/profile_update.html")
 
     def test_profile_update_view_post(self):
         # request = self.factory.post(self.url, new_data)

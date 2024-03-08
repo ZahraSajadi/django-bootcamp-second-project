@@ -14,16 +14,22 @@ class CustomUser(AbstractUser):
     team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True, blank=True)
     REQUIRED_FIELDS = ["first_name", "last_name", "email", "phone"]
 
+    class Meta:
+        permissions = [
+            ("add_reservation_self_team", "Can add reservation to their team"),
+            ("delete_reservation_self_team", "Can delete reservation of their team"),
+        ]
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    @property
-    def is_team_leader(self):
-        return self.groups.filter(name="Team Leader").exists()
+    # @property
+    # def is_team_leader(self):
+    #     return self.groups.filter(name="Team Leader").exists()
 
-    @property
-    def is_admin(self):
-        return self.groups.filter(name="Admins").exists()
+    # @property
+    # def is_admin(self):
+    #     return self.groups.filter(name="Admins").exists()
 
 
 class Team(models.Model):

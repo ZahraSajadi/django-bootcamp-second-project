@@ -1,16 +1,17 @@
 from typing import Any
 from django.contrib.auth import get_user
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import DetailView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from .models import Comment, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
+from users.mixins import CustomPermReqMixin
 
 
-class RoomDetail(DetailView):
+class RoomDetailView(DetailView):
     model = Room
-    template_name = "room_detail.html"
+    template_name = "reservation/room_detail.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -48,3 +49,29 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         if comment_form.is_valid():
             comment_form.save()
         return redirect("reservation:room_detail", pk=room_id)
+
+
+class UserReservationsView(LoginRequiredMixin, ListView): ...
+
+
+class RoomListView(CustomPermReqMixin, ListView):
+    permission_required = "reservation.view_room"
+    model = Room
+
+
+class RoomCreateView(CustomPermReqMixin, CreateView): ...
+
+
+class RoomUpdateView(CustomPermReqMixin, UpdateView): ...
+
+
+class RoomDeleteView(CustomPermReqMixin, DeleteView): ...
+
+
+class ReservationListView(CustomPermReqMixin, ListView): ...
+
+
+class ReservationDetailView(CustomPermReqMixin, DetailView): ...
+
+
+class ReservationDeleteView(UserPassesTestMixin, DeleteView): ...
