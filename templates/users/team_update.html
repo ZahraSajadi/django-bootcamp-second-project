@@ -1,7 +1,8 @@
-{% extends "users/team_create.html" %} {% block title %}Update Team{% endblock title %}
+{% extends "users/team_create.html" %}
+{% block title %}{{form.name.value}} Details{% endblock title %}
 {% block body_title %}
 {{form.name.value}}
 {% endblock body_title %}
 {% block submit_button %}
-<button type="submit">Update</button>
+<button type="submit">Save</button>
 {% endblock submit_button %}

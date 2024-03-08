@@ -30,7 +30,6 @@ class TeamCreateUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print(self.instance)
         if self.instance and self.instance.pk:
             team_members = self.instance.customuser_set.all()
             self.fields["leader"].queryset = team_members
