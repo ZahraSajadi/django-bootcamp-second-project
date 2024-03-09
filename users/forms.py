@@ -4,9 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from .models import Team
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
-
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 
 User = get_user_model()
 
@@ -19,15 +17,26 @@ class UserMultipleChoiceField(forms.ModelMultipleChoiceField):
         return text
 
 
-class TeamCreateUpdateForm(forms.ModelForm):
+class BootstrapModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field.widget.__class__ not in [
+                UserMultipleChoiceField,
+                forms.MultipleChoiceField,
+                forms.CheckboxSelectMultiple,
+            ]:
+                field.widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
+
+
+class TeamCreateUpdateForm(BootstrapModelForm):
     members = UserMultipleChoiceField(
         queryset=User.objects.order_by("id").all(),
         required=False,
         label="Members",
         widget=forms.CheckboxSelectMultiple,
     )
-    leader = forms.ModelChoiceField(queryset=User.objects.all(),
-                                    required=False, label="Team Leader")
+    leader = forms.ModelChoiceField(queryset=User.objects.all(), required=False, label="Team Leader")
 
     class Meta:
         model = Team
@@ -49,8 +58,7 @@ class TeamCreateUpdateForm(forms.ModelForm):
         members = set(self.cleaned_data["members"])
         current_members = self.fields["members"].initial
         cleaned_data["new_members"] = members - current_members
-        cleaned_data["removed_members"] = current_members - members - {
-            cleaned_data["leader"]}
+        cleaned_data["removed_members"] = current_members - members - {cleaned_data["leader"]}
 
         return cleaned_data
 
@@ -84,8 +92,34 @@ class UserCreateForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super(UserCreateForm, self).__init__(*args, **kwargs)
         for visible in self.visible_fields():
-            visible.field.widget.attrs['class'] = 'form-control'
+            visible.field.widget.attrs["class"] = "form-control"
 
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
-        fields = UserCreationForm.Meta.fields + ('phone', 'email')
+        fields = UserCreationForm.Meta.fields + ("phone", "email")
+
+
+class ProfileUpdateForm(BootstrapModelForm):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "profile_image",
+        )
+
+
+class UserUpdateForm(BootstrapModelForm):
+    class Meta(ProfileUpdateForm.Meta):
+        model = User
+        fields = ProfileUpdateForm.Meta.fields + ("team", "is_staff")
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
