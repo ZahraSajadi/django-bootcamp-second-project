@@ -83,7 +83,7 @@ class ReservationDeleteView(UserPassesTestMixin, DeleteView):
         user = self.request.user
         if user.has_perm("reservation.delete_reservation"):
             return True
-        elif user.has_perm("users.delete_reservation_self_team") and user.team == reservation.team:
+        elif user.has_perm("reservation.delete_reservation_self_team") and user.team == reservation.team:
             return True
         else:
             return False

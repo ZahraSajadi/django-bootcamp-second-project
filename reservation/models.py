@@ -5,13 +5,17 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Reservation(models.Model):
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
-    reserver_user = models.ForeignKey(
-        get_user_model(), on_delete=models.SET_NULL, null=True
-    )
+    reserver_user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
     team = models.ForeignKey("users.Team", on_delete=models.CASCADE)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     note = models.TextField(blank=True, null=True)
+
+    class Meta:
+        permissions = [
+            ("add_reservation_self_team", "Can add reservation to their team"),
+            ("delete_reservation_self_team", "Can delete reservation of their team"),
+        ]
 
     def __str__(self):
         return f"Reservation for {self.team.name} on {self.start_date.strftime('%Y-%m-%d')} at {self.start_date.strftime('%H:%M:%S')} by {self.reserver_user}"
@@ -28,9 +32,7 @@ class Comment(models.Model):
 
 
 class Rating(models.Model):
-    value = models.SmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    value = models.SmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     room = models.ForeignKey("Room", on_delete=models.CASCADE)
 
@@ -38,9 +40,7 @@ class Rating(models.Model):
         return f"Rating {self.value} by {self.user} for Room {self.room}"
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["user", "room"], name="unique_rating")
-        ]
+        constraints = [models.UniqueConstraint(fields=["user", "room"], name="unique_rating")]
 
 
 class Room(models.Model):
@@ -53,11 +53,7 @@ class Room(models.Model):
         return self.name
 
     def get_avg_rating(self) -> float:
-        avg_rate = (
-            Rating.objects.filter(room=self)
-                .aggregate(avg_rate=models.Avg("value"))
-                .get("avg_rate")
-        )
+        avg_rate = Rating.objects.filter(room=self).aggregate(avg_rate=models.Avg("value")).get("avg_rate")
         if not avg_rate:
             avg_rate = 0
         return avg_rate

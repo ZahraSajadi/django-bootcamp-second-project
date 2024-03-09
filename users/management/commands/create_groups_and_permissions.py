@@ -1,19 +1,40 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
+from reservation.models import Reservation
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        team_leaders_group, created = Group.objects.get_or_create(name=TEAM_LEADERS_GROUP_NAME)
-        admins_group, created = Group.objects.get_or_create(name=ADMINS_GROUP_NAME)
+        try:
+            team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+            team_leaders_group.delete()
+        except Group.DoesNotExist:
+            pass
+        finally:
+            team_leaders_group = Group.objects.create(name=TEAM_LEADERS_GROUP_NAME)
+        try:
+            admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
+            admins_group.delete()
+        except Group.DoesNotExist:
+            pass
+        finally:
+            admins_group = Group.objects.create(name=ADMINS_GROUP_NAME)
 
         # Team Leaders
-        add_reservation_self_team = Permission.objects.get(codename="add_reservation_self_team")
-        delete_reservation_self_team = Permission.objects.get(codename="delete_reservation_self_team")
+        reservation_content_type = ContentType.objects.get_for_model(Reservation)
+        add_reservation_self_team = Permission.objects.filter(
+            content_type_id=reservation_content_type.id,
+            codename="add_reservation_self_team",
+        ).first()
+        delete_reservation_self_team = Permission.objects.filter(
+            content_type_id=reservation_content_type.id,
+            codename="delete_reservation_self_team",
+        ).first()
 
         team_leaders_group.permissions.add(add_reservation_self_team)
         team_leaders_group.permissions.add(delete_reservation_self_team)

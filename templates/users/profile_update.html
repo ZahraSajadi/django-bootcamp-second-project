@@ -3,9 +3,9 @@
 <h1>Update Profile</h1>
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %} {{ form.as_p }}
-  <p>Role: {% if user.is_superuser %}
+  <p>Role: {% if object.is_superuser %}
     Super user
-    {% elif  user.is_staff%}
+    {% elif  object.is_staff%}
     Admin
     {% else %}
     User
