@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -46,13 +47,43 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
         return reverse("users:login")
 
 
-class UserListView(PermissionRequiredMixin, ListView): ...
+class UserListView(PermissionRequiredMixin, ListView):
+    permission_required = "users.view_customuser"
+    models = User
+    queryset = User.objects.all()
+    ordering = ["id"]
+    template_name = "users/user_list.html"
 
 
-class UserDetailView(PermissionRequiredMixin, DetailView): ...
+class UserUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = ["users.change_customuser", "users.view_customuser"]
+    model = User
+    fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "profile_image",
+        "team",
+        "is_staff",
+    ]
+    template_name = "users/profile_update.html"
+    success_url = reverse_lazy("users:user_list")
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        affected_user = self.get_object()
+        if not self.request.user.is_superuser or affected_user.is_superuser:
+            del form.fields["is_staff"]
+        return form
 
-class UserUpdateView(PermissionRequiredMixin, UpdateView): ...
+    def post(self, request, *args, **kwargs):
+        affected_user = self.get_object()
+        if not self.request.user.is_superuser or affected_user.is_superuser:
+            if "is_staff" in request.POST:
+                return JsonResponse({"error": "You are not authorized to modify this field"}, status=403)
+        return super().post(request, *args, **kwargs)
 
 
 class TeamListView(PermissionRequiredMixin, ListView):

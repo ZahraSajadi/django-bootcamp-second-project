@@ -5,7 +5,7 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from users.models import Team
-from users.views import TeamCreateView, TeamDeleteView, TeamListView, TeamUpdateView
+from users.views import TeamCreateView, TeamDeleteView, TeamListView, TeamUpdateView, UserListView, UserUpdateView
 from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
 User = get_user_model()
@@ -208,3 +208,117 @@ class TeamManagementViewsTestCase(TestCase):
         self.assertIsNone(User.objects.get(pk=self.admin.id).team)
         team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
         self.assertNotIn(team_leader_group, User.objects.get(pk=self.admin.id).groups.all())
+
+
+class UserManagementViewTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.factory = RequestFactory()
+        self.superuser = User.objects.create_superuser(username="superuser", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.user = User.objects.create_user(
+            username="normal",
+            password="password",
+            email="empty1",
+            phone="empty1",
+        )
+        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
+        self.admin.is_staff = True
+        self.admin.save()
+        self.admins_group.user_set.add(self.admin)
+
+    def test_user_list_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        request = self.factory.get(reverse("users:user_list"))
+        request.user = self.user
+        request.session = self.client.session
+        with self.assertRaises(PermissionDenied):
+            UserListView.as_view()(request)
+
+    def test_user_update_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        request = self.factory.get(reverse("users:user_list"))
+        request.user = self.user
+        request.session = self.client.session
+        with self.assertRaises(PermissionDenied):
+            UserUpdateView.as_view()(request, pk=self.user.id)
+
+    def test_user_list_admin_user(self):
+        self.client.login(username=self.admin.username, password="password")
+        request = self.factory.get(reverse("users:user_list"))
+        request.user = self.admin
+        request.session = self.client.session
+        response = UserListView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_update_superuser(self):
+        self.client.login(username=self.superuser.username, password="password")
+        new_first_name = "New First Name"
+        new_last_name = "New Last Name"
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+        }
+        request = self.factory.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        request.user = self.superuser
+        request.session = self.client.session
+        response = UserUpdateView.as_view()(request, pk=self.user.id)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(first_name=new_first_name).exists())
+        self.assertTrue(User.objects.filter(last_name=new_last_name).exists())
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+            "is_staff": "on",
+        }
+        request = self.factory.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        request.user = self.superuser
+        request.session = self.client.session
+        response = UserUpdateView.as_view()(request, pk=self.user.id)
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(pk=self.user.id)
+        self.assertTrue(user.is_staff)
+        self.assertIn(ADMINS_GROUP_NAME, self.user.groups.values_list("name", flat=True))
+
+    def test_user_update_admin(self):
+        self.client.login(username=self.admin.username, password="password")
+        new_first_name = "New First Name"
+        new_last_name = "New Last Name"
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+        }
+        request = self.factory.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        request.user = self.admin
+        request.session = self.client.session
+        response = UserUpdateView.as_view()(request, pk=self.user.id)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(first_name=new_first_name).exists())
+        self.assertTrue(User.objects.filter(last_name=new_last_name).exists())
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+            "is_staff": "on",
+        }
+        request = self.factory.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        request.user = self.admin
+        request.session = self.client.session
+        response = UserUpdateView.as_view()(request, pk=self.user.id)
+        self.assertEqual(response.status_code, 403)

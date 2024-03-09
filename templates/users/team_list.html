@@ -6,9 +6,13 @@
 {% for team in object_list %}
 <p>
     <li>Id: {{ team.id }} - Name: {{ team.name }} - Team Leader: {{team.get_leader}}
+        {% if perms.users.change_team %}
         <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'">Details</button>
-        {% comment %} <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'">Update</button> {% endcomment %}
+        {% endif %}
+        {% if perms.users.delete_team %}
         <button style="margin-top:10px;" onclick="location.href='{% url "users:team_delete" team.id %}'">Delete</button>
+        {% endif %}
+
     </li>
 </p>
 {% empty %}
