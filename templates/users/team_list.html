@@ -1,0 +1,24 @@
+{% extends "_base.html" %}
+{% block title %}Teams List{% endblock title %}
+{% block body %}
+<h1>Teams</h1>
+<ul>
+{% for team in object_list %}
+<p>
+    <li>Id: {{ team.id }} - Name: {{ team.name }} - Team Leader: {{team.get_leader}}
+        {% if perms.users.change_team %}
+        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'">Details</button>
+        {% endif %}
+        {% if perms.users.delete_team %}
+        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_delete" team.id %}'">Delete</button>
+        {% endif %}
+
+    </li>
+</p>
+{% empty %}
+    <li>No Team yet.</li>
+{% endfor %}
+
+<button style="margin-top:10px;" onclick="location.href='{% url "users:team_create" %}'">Create New Team</button>
+</ul>
+{% endblock body %}

@@ -1,25 +1,22 @@
 from typing import Any
 from django.contrib.auth import get_user
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Avg
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView
-from .models import Comment, Room, Rating
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from .models import Comment, Reservation, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
 
 
-class RoomDetail(DetailView):
+class RoomDetailView(DetailView):
     model = Room
-    template_name = "room_detail.html"
+    template_name = "reservation/room_detail.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        avg_rating = Rating.objects.filter(room=self.object).aggregate(
-            avg_rate=Avg("value")
-        )["avg_rate"]
-        if not avg_rating:
-            avg_rating = 0
+        avg_rating = self.object.get_avg_rating()
         context["rate"] = avg_rating
         context["comments"] = Comment.objects.filter(room=self.object).all()
         context["room_id"] = self.kwargs.get("pk")
@@ -53,3 +50,51 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         if comment_form.is_valid():
             comment_form.save()
         return redirect("reservation:room_detail", pk=room_id)
+
+
+class UserReservationListView(LoginRequiredMixin, ListView):
+    model = Reservation
+    template_name = "index.html"
+
+    def get_queryset(self):
+        if self.request.user.id:
+            return Reservation.objects.filter(
+                team=self.request.user.team,
+                end_date__gte=timezone.now(),
+            )
+        return None
+
+
+class RoomListView(PermissionRequiredMixin, ListView):
+    permission_required = "reservation.view_room"
+    model = Room
+
+
+class RoomCreateView(PermissionRequiredMixin, CreateView): ...
+
+
+class RoomUpdateView(PermissionRequiredMixin, UpdateView): ...
+
+
+class RoomDeleteView(PermissionRequiredMixin, DeleteView): ...
+
+
+class ReservationListView(PermissionRequiredMixin, ListView): ...
+
+
+class ReservationDetailView(PermissionRequiredMixin, DetailView): ...
+
+
+class ReservationDeleteView(UserPassesTestMixin, DeleteView):
+    model = Reservation
+    success_url = reverse_lazy("index")
+
+    def test_func(self) -> bool | None:
+        reservation = self.get_object()
+        user = self.request.user
+        if user.has_perm("reservation.delete_reservation"):
+            return True
+        elif user.has_perm("reservation.delete_reservation_self_team") and user.team == reservation.team:
+            return True
+        else:
+            return False

@@ -4,6 +4,8 @@ import django.core.validators
 import django.db.models.deletion
 from django.db import migrations, models
 
+import utils
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -40,6 +42,13 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="users.team",
+            ),
+        ),
+        migrations.AlterField(
+            model_name="customuser",
+            name="profile_image",
+            field=models.ImageField(
+                blank=True, null=True, upload_to=utils.db.model_helper.user_image_path
             ),
         ),
     ]

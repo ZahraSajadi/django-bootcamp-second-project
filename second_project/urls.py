@@ -19,10 +19,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
 from django.conf import settings
+from reservation.views import UserReservationListView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", UserReservationListView.as_view(), name="index"),
     path("user/", include("users.urls")),
-    path("room/", include("reservation.urls")),
+    path("reservation/", include("reservation.urls")),
     path("user/", include("django.contrib.auth.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

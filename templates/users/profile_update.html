@@ -1,0 +1,18 @@
+{% extends "_base.html" %} {% block title %}Update Profile{% endblock title %}
+{% block body %}
+<h1>Update Profile</h1>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %} {{ form.as_p }}
+  <p>Role: {% if object.is_superuser %}
+    Super user
+    {% elif  object.is_staff%}
+    Admin
+    {% else %}
+    User
+    {% endif %}</p>
+  <button type="submit">Update</button>
+</form>
+{% if perms.users.view_customuser %}
+<button style="margin-top:10px;" onclick="location.href='{% url "users:user_list" %}'">User List</button>
+{% endif %}
+{% endblock body %}

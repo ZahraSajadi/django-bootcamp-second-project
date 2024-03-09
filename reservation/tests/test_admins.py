@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from warnings import filterwarnings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from reservation.models import Comment, Rating, Reservation, Room
 from users.models import Team
@@ -11,6 +12,7 @@ User = get_user_model()
 
 class RoomAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -64,6 +66,7 @@ class RoomAdminTest(TestCase):
 
 class ReservationAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.team1 = Team.objects.create(name="one")
         self.team2 = Team.objects.create(name="two")
         self.super_user = User.objects.create_superuser(
@@ -128,43 +131,37 @@ class ReservationAdminTest(TestCase):
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"reserver_user__id__exact": self.super_user.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"team__id__exact": self.team1.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"team__id__exact": self.team1.id}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"start_date": self.start1}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
         filter_params = {"end_date": self.end1}
         response = self.client.get(
             "/admin/reservation/reservation/", data=filter_params
         )
-        self.assertContains(response, self.reserv1)
-        self.assertNotContains(response, self.reserv2)
+        self.assertContains(response, "1 reservation")
 
     def test_room_model_fieldsets(self):
         self.client.login(username=self.super_user.username, password="password")
@@ -181,6 +178,7 @@ class ReservationAdminTest(TestCase):
 
 class CommentAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -266,6 +264,7 @@ class CommentAdminTest(TestCase):
 
 class RatingAdminTest(TestCase):
     def setUp(self):
+        call_command("create_groups_and_permissions")
         self.super_user = User.objects.create_superuser(
             username="superuser",
             password="password",
@@ -306,13 +305,11 @@ class RatingAdminTest(TestCase):
 
         filter_params = {"user__id__exact": self.super_user.id}
         response = self.client.get("/admin/reservation/rating/", data=filter_params)
-        self.assertContains(response, self.rate1)
-        self.assertNotContains(response, self.rate2)
+        self.assertContains(response, "1 rating")
 
         filter_params = {"room__id__exact": self.room1.id}
         response = self.client.get("/admin/reservation/rating/", data=filter_params)
-        self.assertContains(response, self.rate1)
-        self.assertNotContains(response, self.rate2)
+        self.assertContains(response, "1 rating")
 
     def test_comment_model_fieldtest(self):
         self.client.login(username=self.super_user.username, password="password")

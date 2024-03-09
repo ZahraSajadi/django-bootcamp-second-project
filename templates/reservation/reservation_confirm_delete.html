@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% block title %}
+    Delete Reservation
+{% endblock title %}
+{% block body %}
+    <h1>Delete Reservation</h1>
+    <p>Are you sure you want to delete"{{ object }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="submit" value="Confirm Delete">
+    </form>
+    <button style="margin-top:10px;" onclick="window.history.back()">Back</button>
+{% endblock body %}
