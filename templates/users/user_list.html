@@ -1,18 +1,29 @@
-{% extends "_base.html" %}
-{% block title %}Users List{% endblock title %}
+{% extends '_base.html' %}
+
 {% block body %}
-<h1>Users</h1>
-<ul>
-{% for user in object_list %}
-<p>
-    <li>Id: {{ user.id }} - Full Name: {{ user }} - Email: {{ user.email }} - Phone: {{ user.phone }} - Is Admin: {{user.is_staff}} - Is Super User: {{user.is_superuser}}
-        {% if perms.users.change_customuser %}
-        <button style="margin-top:10px;" onclick="location.href='{% url "users:user_update" user.id %}'">Details</button>
-        {% endif %}
-    </li>
-</p>
-{% empty %}
-    <li>No User yet.</li>
-{% endfor %}
-</ul>
-{% endblock body %}
+<div class="container p-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Users</h2>
+            {% for user in object_list %}
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        Id: {{ user.id }} - Full Name: {{ user }} - Email: {{ user.email }} - Phone: {{ user.phone }} - Is Admin: {{user.is_staff}} - Is Super User: {{user.is_superuser}}
+                    </div>
+                    <div>
+                        <button style="margin:10px;" onclick="location.href='{% url "users:user_update" user.id %}'" class="btn btn-sm btn-primary">
+                            Details
+                        </button>
+                    </div>
+                </li>
+            </ul>
+            {% empty %}
+                <li>No User yet.</li>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block dashboard_button %}{% endblock dashboard_button %}

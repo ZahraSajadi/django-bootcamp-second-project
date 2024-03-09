@@ -198,9 +198,9 @@ class IndexTemplateTestCase(TestCase):
         self.assertContains(response, self.reservation1)
         self.assertNotContains(response, self.reservation2)
         self.assertNotContains(response, "Delete")
-        self.assertNotContains(response, "Teams Management")
-        self.assertNotContains(response, "Users Management")
-        self.assertNotContains(response, "Rooms Management")
+        self.assertNotContains(response, "Team Management")
+        self.assertNotContains(response, "User Management")
+        self.assertNotContains(response, "Room Management")
 
     def test_index_admin_user(self):
         self.user.team = self.team1
@@ -211,9 +211,9 @@ class IndexTemplateTestCase(TestCase):
         self.assertContains(response, self.reservation1)
         self.assertNotContains(response, self.reservation2)
         self.assertContains(response, "Delete")
-        self.assertContains(response, "Teams Management")
-        self.assertContains(response, "Users Management")
-        self.assertContains(response, "Rooms Management")
+        self.assertContains(response, "Team Management")
+        self.assertContains(response, "User Management")
+        self.assertContains(response, "Room Management")
 
     def test_index_team_leader(self):
         self.user.team = self.team1
@@ -225,6 +225,6 @@ class IndexTemplateTestCase(TestCase):
         self.assertContains(response, self.reservation1)
         self.assertNotContains(response, self.reservation2)
         self.assertContains(response, "Delete")
-        self.assertNotContains(response, "Teams Management")
-        self.assertNotContains(response, "Users Management")
-        self.assertNotContains(response, "Rooms Management")
+        self.assertNotContains(response, "Team Management")
+        self.assertNotContains(response, "User Management")
+        self.assertNotContains(response, "Room Management")
