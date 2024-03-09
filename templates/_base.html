@@ -14,11 +14,13 @@
     {% block script %}{% endblock %}
 </script>
 
-{% block back_button %}
+{% block dashboard_button %}
 
-<button style="margin-top:10px;" onclick="window.history.back()">Back</button>
+<p>
+    <button style="margin-top:10px;" onclick="location.href='{% url "index" %}'">Dashboard</button>
+</p>
 
-{% endblock back_button %}
+{% endblock dashboard_button %}
 
 </body>
 </html>
