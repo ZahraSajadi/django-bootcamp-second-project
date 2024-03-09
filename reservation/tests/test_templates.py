@@ -1,9 +1,15 @@
+from datetime import datetime
+from warnings import filterwarnings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-from reservation.models import Rating, Room, Comment
+from reservation.models import Rating, Reservation, Room, Comment
+from second_project.settings import TEAM_LEADERS_GROUP_NAME, ADMINS_GROUP_NAME
+from users.models import Team
 
+filterwarnings("ignore", category=RuntimeWarning)
 User = get_user_model()
 
 
@@ -18,12 +24,8 @@ class RoomDetailViewTest(TestCase):
             email="test@noemail.invalid",
             phone="09123456789",
         )
-        self.room = Room.objects.create(
-            name="Test Room", capacity=5, description="Test description", is_active=True
-        )
-        self.comment = Comment.objects.create(
-            room=self.room, content="First Comment", user=self.user
-        )
+        self.room = Room.objects.create(name="Test Room", capacity=5, description="Test description", is_active=True)
+        self.comment = Comment.objects.create(room=self.room, content="First Comment", user=self.user)
         self.rate = Rating.objects.create(user=self.user, room=self.room, value=5)
 
     def test_room_detail_template_unauthenticated_user(self):
@@ -82,11 +84,7 @@ class RoomDetailViewTest(TestCase):
         url = reverse("reservation:submit_comment", kwargs={"room_id": self.room.id})
         response = self.client.post(url, {"content": comment_content})
         self.assertEqual(response.status_code, 302)
-        comment = (
-            Comment.objects.filter(user=self.user, room=self.room)
-            .order_by("-created_at")
-            .first()
-        )
+        comment = Comment.objects.filter(user=self.user, room=self.room).order_by("-created_at").first()
         self.assertEqual(comment_content, comment.content)
 
     def test_unauthenticated_user_cannot_submit_comment(self):
@@ -94,9 +92,49 @@ class RoomDetailViewTest(TestCase):
         url = reverse("reservation:submit_comment", kwargs={"room_id": self.room.id})
         response = self.client.post(url, {"content": comment_content})
         self.assertEqual(response.status_code, 302)
-        comment = (
-            Comment.objects.filter(user=self.user, room=self.room)
-            .order_by("-created_at")
-            .first()
-        )
+        comment = Comment.objects.filter(user=self.user, room=self.room).order_by("-created_at").first()
         self.assertNotEqual(comment_content, comment.content)
+
+
+class ReservationDeleteTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.user = User.objects.create_user(username="user", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
+        self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        self.admins_group.user_set.add(self.admin)
+        self.team_leaders_group.user_set.add(self.user)
+        self.team = Team.objects.create(name="Team")
+        self.room = Room.objects.create(name="Room", capacity=10)
+        self.reservation = Reservation.objects.create(
+            team=self.team,
+            room=self.room,
+            start_date=datetime.now(),
+            end_date=datetime.now(),
+        )
+
+    def test_reservation_delete_admin(self):
+        self.client.login(
+            username=self.admin.username,
+            password="password",
+        )
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
+        self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
+
+    def test_reservation_team_leader(self):
+        self.client.login(
+            username=self.user.username,
+            password="password",
+        )
+        self.user.team = self.team
+        self.user.save()
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
+        self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
