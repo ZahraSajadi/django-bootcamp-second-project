@@ -1,3 +1,4 @@
+from typing import Any
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -38,15 +39,23 @@ class TeamCreateUpdateForm(forms.ModelForm):
         else:
             self.fields["members"].initial = set()
 
-    def save(self, commit=True):
-        team = super().save(commit=commit)
-        team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
-        previous_leader = self.fields["leader"].initial
-        leader = self.cleaned_data.get("leader")
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = super().clean()
+        cleaned_data["previous_leader"] = self.fields["leader"].initial
         members = set(self.cleaned_data["members"])
         current_members = self.fields["members"].initial
-        new_members = members - current_members
-        removed_members = current_members - members - {leader}
+        cleaned_data["new_members"] = members - current_members
+        cleaned_data["removed_members"] = current_members - members - {cleaned_data["leader"]}
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        team = super().save(commit=commit)
+        new_members = self.cleaned_data["new_members"]
+        removed_members = self.cleaned_data["removed_members"]
+        leader = self.cleaned_data["leader"]
+        previous_leader = self.cleaned_data["previous_leader"]
+        team_leader_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
         for member in new_members:
             member.team = team
         for user in removed_members:
