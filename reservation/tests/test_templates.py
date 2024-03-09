@@ -96,7 +96,7 @@ class RoomDetailViewTest(TestCase):
         self.assertNotEqual(comment_content, comment.content)
 
 
-class ReservationDeleteTestCase(TestCase):
+class ReservationDeleteTemplateTestCase(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         self.user = User.objects.create_user(username="user", password="password")
@@ -128,7 +128,7 @@ class ReservationDeleteTestCase(TestCase):
         self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
         self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
 
-    def test_reservation_team_leader(self):
+    def test_reservation_delete_team_leader(self):
         self.client.login(
             username=self.user.username,
             password="password",
@@ -138,3 +138,21 @@ class ReservationDeleteTestCase(TestCase):
         self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
         self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
         self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
+
+    def test_reservation_delete_normal_member(self):
+        normal_member = User.objects.create_user(
+            username="normal",
+            password="password",
+            email="empty1",
+            phone="empty1",
+        )
+        self.client.login(
+            username=normal_member.username,
+            password="password",
+        )
+        normal_member.team = self.team
+        normal_member.save()
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        response = self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        self.assertEqual(response.status_code, 403)
