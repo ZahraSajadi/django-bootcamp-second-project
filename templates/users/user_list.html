@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+{% block title %}Users List{% endblock title %}
+{% block body %}
+<h1>Users</h1>
+<ul>
+{% for user in object_list %}
+<p>
+    <li>Id: {{ user.id }} - Full Name: {{ user }} - Email: {{ user.email }} - Phone: {{ user.phone }} - Is Admin: {{user.is_staff}} - Is Super User: {{user.is_superuser}}
+        {% if perms.users.change_customuser %}
+        <button style="margin-top:10px;" onclick="location.href='{% url "users:user_update" user.id %}'">Details</button>
+        {% endif %}
+    </li>
+</p>
+{% empty %}
+    <li>No User yet.</li>
+{% endfor %}
+</ul>
+{% endblock body %}

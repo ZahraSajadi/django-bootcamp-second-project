@@ -10,4 +10,7 @@
   <button type="submit">Create</button>
   {% endblock submit_button %}
 </form>
+{% if perms.users.view_team %}
+<button style="margin-top:10px;" onclick="location.href='{% url "users:team_list" %}'">Teams List</button>
+{% endif %}
 {% endblock body %}

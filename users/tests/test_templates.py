@@ -9,7 +9,7 @@ from second_project.settings import ADMINS_GROUP_NAME
 User = get_user_model()
 
 
-class TeamManagementTestCase(TestCase):
+class TeamManagementTemplateTestCase(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         self.user = User.objects.create_user(username="user", password="password")
@@ -89,3 +89,119 @@ class TeamManagementTestCase(TestCase):
         self.assertTrue(Team.objects.filter(name=self.team.name).exists())
         self.client.post(reverse("users:team_delete", kwargs={"pk": self.team.id}))
         self.assertFalse(Team.objects.filter(name=self.team.name).exists())
+
+
+class UserManagementTemplateTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.superuser = User.objects.create_superuser(username="superuser", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.user = User.objects.create_user(
+            username="normal",
+            password="password",
+            email="empty1",
+            phone="empty1",
+        )
+        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
+        self.admin.is_staff = True
+        self.admin.save()
+        self.admins_group.user_set.add(self.admin)
+
+    def test_user_list_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("users:user_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_update_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("users:user_update", kwargs={"pk": self.user.id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_list_template(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.get(reverse("users:user_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.user)
+        self.assertContains(response, self.admin)
+        self.assertContains(response, self.superuser)
+        self.assertTemplateUsed(response, "users/user_list.html")
+
+    def test_user_update_template_admin(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.get(reverse("users:user_update", args=[self.user.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.user)
+        self.assertNotContains(response, "Staff status:")
+        self.assertTemplateUsed(response, "users/profile_update.html")
+
+    def test_user_update_template_superuser(self):
+        self.client.login(username=self.superuser.username, password="password")
+        response = self.client.get(reverse("users:user_update", args=[self.user.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.user)
+        self.assertContains(response, "Staff status:")
+        self.assertTemplateUsed(response, "users/profile_update.html")
+        response = self.client.get(reverse("users:user_update", args=[self.superuser.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.superuser)
+        self.assertNotContains(response, "Staff status:")
+
+    def test_user_update_superuser(self):
+        self.client.login(username=self.superuser.username, password="password")
+        new_first_name = "New First Name"
+        new_last_name = "New Last Name"
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+        }
+        response = self.client.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(first_name=new_first_name).exists())
+        self.assertTrue(User.objects.filter(last_name=new_last_name).exists())
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+            "is_staff": "on",
+        }
+        response = self.client.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(pk=self.user.id)
+        self.assertTrue(user.is_staff)
+        self.assertIn(ADMINS_GROUP_NAME, self.user.groups.values_list("name", flat=True))
+
+    def test_user_update_admin(self):
+        self.client.login(username=self.admin.username, password="password")
+        new_first_name = "New First Name"
+        new_last_name = "New Last Name"
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+        }
+        response = self.client.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(first_name=new_first_name).exists())
+        self.assertTrue(User.objects.filter(last_name=new_last_name).exists())
+        data = {
+            "username": self.user.username,
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "first_name": new_first_name,
+            "last_name": new_last_name,
+            "is_staff": "on",
+        }
+        response = self.client.post(reverse("users:user_update", kwargs={"pk": self.user.id}), data)
+        self.assertEqual(response.status_code, 403)
