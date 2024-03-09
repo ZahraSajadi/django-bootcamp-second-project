@@ -118,8 +118,8 @@ class TeamManagementViewsTestCase(TestCase):
             email="empty",
             phone="empty",
         )
-        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
-        self.admins_group.user_set.add(self.admin)
+        self.admin.is_staff = True
+        self.admin.save()
         self.team = Team.objects.create(name="Test Team")
 
     def test_team_list_view_normal_user(self):
@@ -227,10 +227,8 @@ class UserManagementViewTestCase(TestCase):
             email="empty1",
             phone="empty1",
         )
-        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
         self.admin.is_staff = True
         self.admin.save()
-        self.admins_group.user_set.add(self.admin)
 
     def test_user_list_normal_user(self):
         self.client.login(username=self.user.username, password="password")

@@ -19,8 +19,8 @@ class TeamManagementTemplateTestCase(TestCase):
             email="empty",
             phone="empty",
         )
-        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
-        self.admins_group.user_set.add(self.admin)
+        self.admin.is_staff = True
+        self.admin.save()
         self.team = Team.objects.create(name="Test Team")
 
     def test_team_list_normal_user(self):

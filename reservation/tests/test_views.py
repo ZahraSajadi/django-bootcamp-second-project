@@ -9,7 +9,7 @@ from django.urls import reverse
 from reservation.models import Reservation, Room, Comment, Rating
 from users.models import Team
 from reservation.views import ReservationDeleteView, RoomDetailView, RatingSubmissionView, CommentSubmissionView
-from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
+from second_project.settings import TEAM_LEADERS_GROUP_NAME
 
 filterwarnings("ignore", category=RuntimeWarning)
 User = get_user_model()
@@ -85,9 +85,9 @@ class ReservationDeleteViewTestCase(TestCase):
             email="empty",
             phone="empty",
         )
-        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
         self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
-        self.admins_group.user_set.add(self.admin)
+        self.admin.is_staff = True
+        self.admin.save()
         self.team_leaders_group.user_set.add(self.user)
         self.team = Team.objects.create(name="Team")
         self.room = Room.objects.create(name="Room", capacity=10)

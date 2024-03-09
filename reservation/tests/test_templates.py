@@ -6,7 +6,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from reservation.models import Rating, Reservation, Room, Comment
-from second_project.settings import TEAM_LEADERS_GROUP_NAME, ADMINS_GROUP_NAME
+from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from users.models import Team
 
 filterwarnings("ignore", category=RuntimeWarning)
@@ -106,10 +106,10 @@ class ReservationDeleteTemplateTestCase(TestCase):
             email="empty",
             phone="empty",
         )
-        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
         self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
-        self.admins_group.user_set.add(self.admin)
         self.team_leaders_group.user_set.add(self.user)
+        self.admin.is_staff = True
+        self.admin.save()
         self.team = Team.objects.create(name="Team")
         self.room = Room.objects.create(name="Room", capacity=10)
         self.reservation = Reservation.objects.create(
