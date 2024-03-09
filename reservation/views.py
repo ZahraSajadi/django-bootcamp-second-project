@@ -3,6 +3,7 @@ from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from .models import Comment, Reservation, Room, Rating
@@ -51,7 +52,17 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         return redirect("reservation:room_detail", pk=room_id)
 
 
-class UserReservationsView(LoginRequiredMixin, ListView): ...
+class UserReservationListView(LoginRequiredMixin, ListView):
+    model = Reservation
+    template_name = "index.html"
+
+    def get_queryset(self):
+        if self.request.user.id:
+            return Reservation.objects.filter(
+                team=self.request.user.team,
+                end_date__gte=timezone.now(),
+            )
+        return None
 
 
 class RoomListView(PermissionRequiredMixin, ListView):

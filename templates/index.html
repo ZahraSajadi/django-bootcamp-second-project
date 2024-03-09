@@ -1,5 +1,32 @@
 {% extends '_base.html' %}
 
+{% block title %}Dashboard{% endblock title %}
 {% block body %}
+<h1>Dashboard</h1>
+<button style="margin:10px;" onclick="location.href='{% url "users:profile" %}'">Profile</button>
+{% if perms.users.view_customuser %}
+<button style="margin:10px;" onclick="location.href='{% url "users:user_list" %}'">Users Management</button>
+{% endif %}
+{% if perms.users.view_team %}
+<button style="margin:10px;" onclick="location.href='{% url "users:team_list" %}'">Teams Management</button>
+{% endif %}
+{% if perms.reservation.view_room %}
+<button style="margin:10px;" onclick="location.href='{% url "reservation:room_list" %}'">Rooms Management</button>
+{% endif %}
+<ul>
+    {% for reservation in object_list %}
+        <p>
+            <li>
+                {{reservation}}
+                {% if perms.reservation.delete_reservation or perms.reservation.delete_reservation_self_team%}
+                    <button style="margin:10px;" onclick="location.href='{% url "reservation:reservation_delete" reservation.id%}'">Delete</button>
+                {% endif %}
+            </li>
+        </p>
+    {% endfor %}
+</ul>
+
+<button style="margin-top:10px;" onclick="location.href='{% url "index" %}'">Reservation</button>
 
 {% endblock %}
+{% block dashboard_button %}{% endblock dashboard_button %}
