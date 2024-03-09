@@ -70,3 +70,7 @@ class Command(BaseCommand):
         admins_group.permissions.add(can_view_reservation)
         admins_group.permissions.add(can_change_customuser)
         admins_group.permissions.add(can_view_customuser)
+
+        for user in User.objects.all():
+            if user.is_staff or user.is_superuser:
+                user.save()
