@@ -52,7 +52,7 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         return redirect("reservation:room_detail", pk=room_id)
 
 
-class UserReservationsView(LoginRequiredMixin, ListView):
+class UserReservationListView(LoginRequiredMixin, ListView):
     model = Reservation
     template_name = "index.html"
 

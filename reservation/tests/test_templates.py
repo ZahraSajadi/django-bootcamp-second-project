@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from warnings import filterwarnings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -156,3 +156,66 @@ class ReservationDeleteTemplateTestCase(TestCase):
         response = self.client.post(reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}))
         self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
         self.assertEqual(response.status_code, 403)
+
+
+class IndexTemplateTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.user = User.objects.create_user(username="user", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.admin.is_staff = True
+        self.admin.save()
+        self.team1 = Team.objects.create(name="Team One")
+        self.team2 = Team.objects.create(name="Team Two")
+        self.room = Room.objects.create(name="Room", capacity=10)
+        self.reservation1 = Reservation.objects.create(
+            team=self.team1,
+            room=self.room,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=1),
+        )
+        self.reservation2 = Reservation.objects.create(
+            team=self.team2,
+            room=self.room,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=1),
+        )
+
+    def test_index_no_login(self):
+        response = self.client.get("")
+        self.assertEqual(response.status_code, 302)
+
+    def test_index_normal_user(self):
+        self.user.team = self.team1
+        self.user.save()
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get("")
+        self.assertContains(response, self.reservation1)
+        self.assertNotContains(response, self.reservation2)
+        self.assertNotContains(response, "Delete")
+
+    def test_index_admin_user(self):
+        self.user.team = self.team1
+        self.user.is_staff = True
+        self.user.save()
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get("")
+        self.assertContains(response, self.reservation1)
+        self.assertNotContains(response, self.reservation2)
+        self.assertContains(response, "Delete")
+
+    def test_index_team_leader(self):
+        self.user.team = self.team1
+        self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        self.team_leaders_group.user_set.add(self.user)
+        self.user.save()
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get("")
+        self.assertContains(response, self.reservation1)
+        self.assertNotContains(response, self.reservation2)
+        self.assertContains(response, "Delete")
