@@ -1,7 +1,7 @@
 {% extends "_base.html" %} {% block title %}{% endblock title %} {% block body%}
 <form method="post">
   {% csrf_token %}
-
+  
   {% if messages %}
   <ul class="messages">
     {% for message in messages %}
@@ -9,7 +9,7 @@
     {% endfor %}
   </ul>
   {% endif %}
-
+  
   {{ form.as_p }}
   <button type="submit">Login</button>
 </form>

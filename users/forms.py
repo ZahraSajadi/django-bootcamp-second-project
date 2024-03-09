@@ -123,3 +123,11 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
+
+
+class PhoneLoginForm(forms.Form):
+    phone = forms.CharField(
+        label="",
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
+    )
