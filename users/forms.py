@@ -5,6 +5,9 @@ from django.contrib.auth.models import Group
 from .models import Team
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
+
 User = get_user_model()
 
 
@@ -23,7 +26,8 @@ class TeamCreateUpdateForm(forms.ModelForm):
         label="Members",
         widget=forms.CheckboxSelectMultiple,
     )
-    leader = forms.ModelChoiceField(queryset=User.objects.all(), required=False, label="Team Leader")
+    leader = forms.ModelChoiceField(queryset=User.objects.all(),
+                                    required=False, label="Team Leader")
 
     class Meta:
         model = Team
@@ -45,7 +49,8 @@ class TeamCreateUpdateForm(forms.ModelForm):
         members = set(self.cleaned_data["members"])
         current_members = self.fields["members"].initial
         cleaned_data["new_members"] = members - current_members
-        cleaned_data["removed_members"] = current_members - members - {cleaned_data["leader"]}
+        cleaned_data["removed_members"] = current_members - members - {
+            cleaned_data["leader"]}
 
         return cleaned_data
 
@@ -73,3 +78,14 @@ class TeamCreateUpdateForm(forms.ModelForm):
                     team_leader_group.user_set.add(leader)
                     leader.save()
         return team
+
+
+class UserCreateForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super(UserCreateForm, self).__init__(*args, **kwargs)
+        for visible in self.visible_fields():
+            visible.field.widget.attrs['class'] = 'form-control'
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = UserCreationForm.Meta.fields + ('phone', 'email')
