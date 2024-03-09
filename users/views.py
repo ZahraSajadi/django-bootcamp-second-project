@@ -1,11 +1,13 @@
 from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views.generic import DeleteView, DetailView, ListView, UpdateView, \
+    CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin, \
+    PermissionRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import get_user_model
 from .models import Team
-from .forms import TeamCreateUpdateForm
+from .forms import TeamCreateUpdateForm, UserCreateForm
 
 User = get_user_model()
 
@@ -24,7 +26,8 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
-    fields = ["username", "first_name", "last_name", "email", "phone", "profile_image"]
+    fields = ["username", "first_name", "last_name", "email", "phone",
+              "profile_image"]
     template_name = "users/profile_update.html"
 
     def get_success_url(self):
@@ -35,22 +38,13 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.views.generic import CreateView
-
-from users.forms import UserCreateForm
 
 
 class UserCreate(CreateView):
     form_class = UserCreateForm
-    template_name = 'user/signup.html'
-    success_url = reverse_lazy('login')
+    template_name = 'users/signup.html'
+    success_url = reverse_lazy('users:login')
 
-    def form_valid(self, form):
-        form.instance.user.team = None
-        return super().form_valid(form)
-# Create your views here.
 
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "users/change_password.html"
@@ -97,7 +91,9 @@ class UserUpdateView(PermissionRequiredMixin, UpdateView):
         affected_user = self.get_object()
         if not self.request.user.is_superuser or affected_user.is_superuser:
             if "is_staff" in request.POST:
-                return JsonResponse({"error": "You are not authorized to modify this field"}, status=403)
+                return JsonResponse(
+                    {"error": "You are not authorized to modify this field"},
+                    status=403)
         return super().post(request, *args, **kwargs)
 
 

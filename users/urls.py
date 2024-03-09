@@ -17,9 +17,11 @@ app_name = "users"
 
 urlpatterns = [
     # login is not implemented... just for run profile tests
-    path("login/", LoginView.as_view(template_name="users/login.html"), name="login"),
+    path("login/", LoginView.as_view(template_name="users/login.html"),
+         name="login"),
     path("profile/", ProfileView.as_view(), name="profile"),
-    path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
+    path("profile/update/", ProfileUpdateView.as_view(),
+         name="profile_update"),
     path(
         "profile/change-password/",
         CustomPasswordChangeView.as_view(),

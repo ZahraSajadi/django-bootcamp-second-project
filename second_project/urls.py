@@ -23,8 +23,8 @@ from reservation.views import UserReservationListView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+
     path("", UserReservationListView.as_view(), name="index"),
     path("user/", include("users.urls")),
     path("reservation/", include("reservation.urls")),
-    path("user/", include("django.contrib.auth.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
