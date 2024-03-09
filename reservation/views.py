@@ -1,12 +1,13 @@
 from typing import Any
 from django.contrib.auth import get_user
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from .models import Comment, Room, Rating
+from .models import Comment, Reservation, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
-from users.mixins import CustomPermReqMixin
 
 
 class RoomDetailView(DetailView):
@@ -51,27 +52,49 @@ class CommentSubmissionView(LoginRequiredMixin, View):
         return redirect("reservation:room_detail", pk=room_id)
 
 
-class UserReservationsView(LoginRequiredMixin, ListView): ...
+class UserReservationListView(LoginRequiredMixin, ListView):
+    model = Reservation
+    template_name = "index.html"
+
+    def get_queryset(self):
+        if self.request.user.id:
+            return Reservation.objects.filter(
+                team=self.request.user.team,
+                end_date__gte=timezone.now(),
+            )
+        return None
 
 
-class RoomListView(CustomPermReqMixin, ListView):
+class RoomListView(PermissionRequiredMixin, ListView):
     permission_required = "reservation.view_room"
     model = Room
 
 
-class RoomCreateView(CustomPermReqMixin, CreateView): ...
+class RoomCreateView(PermissionRequiredMixin, CreateView): ...
 
 
-class RoomUpdateView(CustomPermReqMixin, UpdateView): ...
+class RoomUpdateView(PermissionRequiredMixin, UpdateView): ...
 
 
-class RoomDeleteView(CustomPermReqMixin, DeleteView): ...
+class RoomDeleteView(PermissionRequiredMixin, DeleteView): ...
 
 
-class ReservationListView(CustomPermReqMixin, ListView): ...
+class ReservationListView(PermissionRequiredMixin, ListView): ...
 
 
-class ReservationDetailView(CustomPermReqMixin, DetailView): ...
+class ReservationDetailView(PermissionRequiredMixin, DetailView): ...
 
 
-class ReservationDeleteView(UserPassesTestMixin, DeleteView): ...
+class ReservationDeleteView(UserPassesTestMixin, DeleteView):
+    model = Reservation
+    success_url = reverse_lazy("index")
+
+    def test_func(self) -> bool | None:
+        reservation = self.get_object()
+        user = self.request.user
+        if user.has_perm("reservation.delete_reservation"):
+            return True
+        elif user.has_perm("reservation.delete_reservation_self_team") and user.team == reservation.team:
+            return True
+        else:
+            return False

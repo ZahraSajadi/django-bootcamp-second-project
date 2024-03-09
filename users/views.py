@@ -1,84 +1,119 @@
-from django.urls import reverse
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    UpdateView,
-    View,
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import get_user_model, authenticate, login
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+from django.views.generic import DeleteView, DetailView, ListView, UpdateView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib import messages
-from django.shortcuts import render, redirect
-
-from users.forms import PhoneLoginForm
-from users.models import OTP, CustomUser
 from utils.db.model_helper import generate_otp
-from .mixins import CustomPermReqMixin
+from .models import OTP, Team
+from .forms import (
+    CustomPasswordChangeForm,
+    PhoneLoginForm,
+    ProfileUpdateForm,
+    TeamCreateUpdateForm,
+    UserCreateForm,
+    UserUpdateForm,
+)
+
+User = get_user_model()
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
-    model = get_user_model()
+    model = User
     template_name = "users/profile.html"
     context_object_name = "user"
 
     def get_object(self, queryset=None):
         return self.request.user
 
-    def get_login_url(self):
-        return reverse("users:login")
-
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = get_user_model()
-    fields = ["username", "first_name", "last_name", "email", "phone", "profile_image"]
+    model = User
+    form_class = ProfileUpdateForm
     template_name = "users/profile_update.html"
-
-    def get_success_url(self):
-        return reverse("users:profile")
-
-    def get_login_url(self):
-        return reverse("users:login")
+    success_url = reverse_lazy("users:profile")
 
     def get_object(self, queryset=None):
         return self.request.user
 
 
+class UserCreate(UserPassesTestMixin, CreateView):
+    form_class = UserCreateForm
+    template_name = "users/signup.html"
+    success_url = reverse_lazy("users:login")
+
+    def test_func(self) -> bool | None:
+        if self.request.user.is_authenticated:
+            return False
+        return True
+
+
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "users/change_password.html"
-
-    def get_success_url(self):
-        return reverse("users:profile")
-
-    def get_login_url(self):
-        return reverse("users:login")
+    form_class = CustomPasswordChangeForm
+    success_url = reverse_lazy("users:profile")
 
 
-class UserListView(CustomPermReqMixin, ListView): ...
+class UserListView(PermissionRequiredMixin, ListView):
+    permission_required = "users.view_customuser"
+    models = User
+    queryset = User.objects.all()
+    ordering = ["id"]
+    template_name = "users/user_list.html"
 
 
-class UserDetailView(CustomPermReqMixin, DetailView): ...
+class UserUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = ["users.change_customuser", "users.view_customuser"]
+    model = User
+    form_class = UserUpdateForm
+    template_name = "users/profile_update.html"
+    success_url = reverse_lazy("users:user_list")
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        affected_user = self.get_object()
+        if not self.request.user.is_superuser or affected_user.is_superuser:
+            del form.fields["is_staff"]
+        return form
+
+    def post(self, request, *args, **kwargs):
+        affected_user = self.get_object()
+        if not self.request.user.is_superuser or affected_user.is_superuser:
+            if "is_staff" in request.POST:
+                return JsonResponse({"error": "You are not authorized to modify this field"}, status=403)
+        return super().post(request, *args, **kwargs)
 
 
-class UserUpdateView(CustomPermReqMixin, UpdateView): ...
+class TeamListView(PermissionRequiredMixin, ListView):
+    permission_required = "users.view_team"
+    model = Team
+    ordering = ["id"]
 
 
-class TeamListView(CustomPermReqMixin, ListView): ...
+class TeamCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "users.add_team"
+    model = Team
+    form_class = TeamCreateUpdateForm
+    template_name = "users/team_create.html"
+    success_url = reverse_lazy("users:team_list")
 
 
-class TeamDetailView(CustomPermReqMixin, DetailView): ...
+class TeamUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = ["users.change_team", "users.view_team"]
+    model = Team
+    form_class = TeamCreateUpdateForm
+    template_name = "users/team_update.html"
+    success_url = reverse_lazy("users:team_list")
 
 
-class TeamCreateView(CustomPermReqMixin, CreateView): ...
-
-
-class TeamUpdateView(CustomPermReqMixin, UpdateView): ...
-
-
-class TeamDeleteView(CustomPermReqMixin, DeleteView): ...
+class TeamDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = "users.delete_team"
+    model = Team
+    success_url = reverse_lazy("users:team_list")
 
 
 class PhoneLoginView(View):
@@ -93,7 +128,7 @@ class PhoneLoginView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             phone = form.cleaned_data["phone"]
-            user = CustomUser.objects.filter(phone=phone).first()
+            user = User.objects.filter(phone=phone).first()
 
             if user:
                 otp_code = generate_otp()

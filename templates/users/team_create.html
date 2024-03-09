@@ -1,0 +1,23 @@
+{% extends "_base.html" %} {% block body %}
+<div class="container p-4">
+  <div class="row">
+    <div class="col-12">
+      <h2>{% block body_title %} Create New Team {% endblock body_title %}</h2>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">{{ form.as_p }}</div>
+        <p>
+          <small
+            >Note: Team Leader will be added to team members even if it is not
+            selected in team members</small
+          >
+        </p>
+        {% block submit_button %}
+        <button type="submit" class="btn btn-primary">Create</button>
+        {% endblock submit_button %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock body %}

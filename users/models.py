@@ -1,35 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
-
+from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from utils.db.model_helper import generate_otp, phone_regex, user_image_path
 
 
 class CustomUser(AbstractUser):
-    first_name = models.CharField("first name", max_length=150)
-    last_name = models.CharField("last name", max_length=150)
     email = models.EmailField("email address", unique=True)
     profile_image = models.ImageField(upload_to=user_image_path, blank=True, null=True)
     phone = models.CharField(max_length=11, validators=[phone_regex], unique=True)
-    team = models.ForeignKey("Team", on_delete=models.PROTECT, null=True, blank=True)
-    REQUIRED_FIELDS = ["first_name", "last_name", "email", "phone"]
-
-    class Meta:
-        permissions = [
-            ("add_reservation_self_team", "Can add reservation to their team"),
-            ("delete_reservation_self_team", "Can delete reservation of their team"),
-        ]
+    team = models.ForeignKey("Team", on_delete=models.SET_NULL, null=True, blank=True)
+    REQUIRED_FIELDS = ["email", "phone"]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
 
-    # @property
-    # def is_team_leader(self):
-    #     return self.groups.filter(name="Team Leader").exists()
-
-    # @property
-    # def is_admin(self):
-    #     return self.groups.filter(name="Admins").exists()
+        return self.username
 
 
 class Team(models.Model):
@@ -37,6 +24,9 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_leader(self):
+        return self.customuser_set.filter(groups__name=TEAM_LEADERS_GROUP_NAME).first()
 
 
 class OTP(models.Model):
