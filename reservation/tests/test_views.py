@@ -1,11 +1,17 @@
+from datetime import datetime
+from warnings import filterwarnings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Group
+from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
-from reservation.models import Room, Comment, Rating
-from reservation.views import RoomDetailView, RatingSubmissionView, CommentSubmissionView
+from reservation.models import Reservation, Room, Comment, Rating
+from users.models import Team
+from reservation.views import ReservationDeleteView, RoomDetailView, RatingSubmissionView, CommentSubmissionView
+from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
+filterwarnings("ignore", category=RuntimeWarning)
 User = get_user_model()
 
 
@@ -66,3 +72,80 @@ class RoomDetailViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         comment = Comment.objects.filter(user=self.user, room=self.room).order_by("-created_at").first()
         self.assertEqual(comment_content, comment.content)
+
+
+class ReservationDeleteViewTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="user", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.admins_group = Group.objects.get(name=ADMINS_GROUP_NAME)
+        self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        self.admins_group.user_set.add(self.admin)
+        self.team_leaders_group.user_set.add(self.user)
+        self.team = Team.objects.create(name="Team")
+        self.room = Room.objects.create(name="Room", capacity=10)
+        self.reservation = Reservation.objects.create(
+            team=self.team,
+            room=self.room,
+            start_date=datetime.now(),
+            end_date=datetime.now(),
+        )
+
+    def test_reservation_delete_admin(self):
+        self.client.login(
+            username=self.admin.username,
+            password="password",
+        )
+        request = self.factory.post(
+            reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}),
+        )
+        request.user = self.admin
+        request.session = self.client.session
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        ReservationDeleteView.as_view()(request, pk=self.reservation.id)
+        self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
+
+    def test_reservation_delete_team_leader(self):
+        self.client.login(
+            username=self.user.username,
+            password="password",
+        )
+        self.user.team = self.team
+        self.user.save()
+        request = self.factory.post(
+            reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}),
+        )
+        request.user = self.user
+        request.session = self.client.session
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        ReservationDeleteView.as_view()(request, pk=self.reservation.id)
+        self.assertFalse(Reservation.objects.filter(id=self.reservation.id).exists())
+
+    def test_reservation_delete_normal_member(self):
+        normal_member = User.objects.create_user(
+            username="normal",
+            password="password",
+            email="empty1",
+            phone="empty1",
+        )
+        self.client.login(
+            username=normal_member.username,
+            password="password",
+        )
+        normal_member.team = self.team
+        normal_member.save()
+        request = self.factory.post(
+            reverse("reservation:reservation_delete", kwargs={"pk": self.reservation.id}),
+        )
+        request.user = normal_member
+        request.session = self.client.session
+        self.assertTrue(Reservation.objects.filter(id=self.reservation.id).exists())
+        with self.assertRaises(PermissionDenied):
+            ReservationDeleteView.as_view()(request, pk=self.reservation.id)

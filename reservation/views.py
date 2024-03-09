@@ -2,9 +2,10 @@ from typing import Any
 from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from .models import Comment, Room, Rating
+from .models import Comment, Reservation, Room, Rating
 from .forms import SubmitCommentForm, SubmitRatingForm
 
 
@@ -73,4 +74,16 @@ class ReservationListView(PermissionRequiredMixin, ListView): ...
 class ReservationDetailView(PermissionRequiredMixin, DetailView): ...
 
 
-class ReservationDeleteView(UserPassesTestMixin, DeleteView): ...
+class ReservationDeleteView(UserPassesTestMixin, DeleteView):
+    model = Reservation
+    success_url = reverse_lazy("index")
+
+    def test_func(self) -> bool | None:
+        reservation = self.get_object()
+        user = self.request.user
+        if user.has_perm("reservation.delete_reservation"):
+            return True
+        elif user.has_perm("users.delete_reservation_self_team") and user.team == reservation.team:
+            return True
+        else:
+            return False
