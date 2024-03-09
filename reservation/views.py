@@ -57,10 +57,12 @@ class UserReservationListView(LoginRequiredMixin, ListView):
     template_name = "index.html"
 
     def get_queryset(self):
-        return Reservation.objects.filter(
-            team=self.request.user.team,
-            end_date__gte=timezone.now(),
-        )
+        if self.request.user.id:
+            return Reservation.objects.filter(
+                team=self.request.user.team,
+                end_date__gte=timezone.now(),
+            )
+        return None
 
 
 class RoomListView(PermissionRequiredMixin, ListView):
