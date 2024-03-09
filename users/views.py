@@ -9,7 +9,8 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import get_user_model, authenticate, login
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
@@ -93,6 +94,7 @@ class PhoneLoginView(View):
         if form.is_valid():
             phone = form.cleaned_data["phone"]
             user = CustomUser.objects.filter(phone=phone).first()
+
             if user:
                 otp_code = generate_otp()
                 OTP.objects.create(user=user, otp=otp_code)
@@ -101,4 +103,28 @@ class PhoneLoginView(View):
                 return redirect("profile")
             else:
                 messages.error(request, "User with this phone number does not exist.")
+        return render(request, self.template_name, {"form": form})
+
+
+class UsernameLoginView(View):
+    template_name = "users/login_with_username.html"
+    form_class = AuthenticationForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(request, data=request.POST or None)
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                messages.success(request, "You are now logged in.")
+                return redirect("profile")
+            else:
+                messages.error(request, "Invalid username or password.")
         return render(request, self.template_name, {"form": form})

@@ -14,6 +14,7 @@ from .views import (
     ProfileView,
     ProfileUpdateView,
     CustomPasswordChangeView,
+    UsernameLoginView,
 )
 
 app_name = "users"
@@ -22,6 +23,7 @@ urlpatterns = [
     path(
         "login/", PhoneLoginView.as_view(template_name="users/login.html"), name="login"
     ),
+    path("login/username/", UsernameLoginView.as_view(), name="login_with_username"),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path(
