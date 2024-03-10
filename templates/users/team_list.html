@@ -3,17 +3,17 @@
 <div class="container p-4">
     <div class="row">
         <div class="col-12">
-            <h1>Teams</h1>
+            <h2>Teams</h2>
             <ul class="list-group">
                 {% for team in object_list %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>Id: {{ team.id }} - Name: {{ team.name }} - Team Leader: {{team.get_leader}}</span>
                     <div>
                         {% if perms.users.change_team %}
-                        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_update" team.id %}'" class="btn btn-primary btn-sm">Details</button>
+                        <button style="margin:10px;" onclick="location.href='{% url "users:team_update" team.id %}'" class="btn btn-primary btn-sm">Details</button>
                         {% endif %}
                         {% if perms.users.delete_team %}
-                        <button style="margin-top:10px;" onclick="location.href='{% url "users:team_delete" team.id %}'" class="btn btn-danger btn-sm">Delete</button>
+                        <button style="margin:10px;" onclick="location.href='{% url "users:team_delete" team.id %}'" class="btn btn-danger btn-sm">Delete</button>
                         {% endif %}
                     </div>
                 </li>

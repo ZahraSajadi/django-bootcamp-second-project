@@ -1,7 +1,7 @@
 from django.urls import path
-from django.contrib.auth.views import LoginView
 from users.views import UserCreate
 from .views import (
+    PhoneLoginView,
     TeamCreateView,
     TeamDeleteView,
     TeamListView,
@@ -11,13 +11,14 @@ from .views import (
     ProfileView,
     ProfileUpdateView,
     CustomPasswordChangeView,
+    UsernameLoginView,
 )
 
 app_name = "users"
 
 urlpatterns = [
-    # login is not implemented... just for run profile tests
-    path("login/", LoginView.as_view(template_name="users/login.html", redirect_authenticated_user=True), name="login"),
+    path("login/", PhoneLoginView.as_view(template_name="users/login.html"), name="login"),
+    path("login/username/", UsernameLoginView.as_view(), name="login_with_username"),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path(
