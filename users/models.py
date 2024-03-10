@@ -10,7 +10,7 @@ class CustomUser(AbstractUser):
     profile_image = models.ImageField(upload_to=user_image_path, blank=True, null=True)
     phone = models.CharField(max_length=11, validators=[phone_regex], unique=True)
     team = models.ForeignKey("Team", on_delete=models.SET_NULL, null=True, blank=True)
-    REQUIRED_FIELDS = ["first_name", "last_name", "email", "phone"]
+    REQUIRED_FIELDS = ["email", "phone"]
 
     def __str__(self):
         if self.first_name and self.last_name:

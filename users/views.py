@@ -1,13 +1,11 @@
 from django.http import JsonResponse
-from django.urls import reverse, reverse_lazy
-from django.views.generic import DeleteView, DetailView, ListView, UpdateView, \
-    CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin, \
-    PermissionRequiredMixin
+from django.urls import reverse_lazy
+from django.views.generic import DeleteView, DetailView, ListView, UpdateView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import get_user_model
 from .models import Team
-from .forms import TeamCreateUpdateForm, UserCreateForm
+from .forms import CustomPasswordChangeForm, ProfileUpdateForm, TeamCreateUpdateForm, UserCreateForm, UserUpdateForm
 
 User = get_user_model()
 
@@ -20,40 +18,32 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         return self.request.user
 
-    def get_login_url(self):
-        return reverse("users:login")
-
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
-    fields = ["username", "first_name", "last_name", "email", "phone",
-              "profile_image"]
+    form_class = ProfileUpdateForm
     template_name = "users/profile_update.html"
-
-    def get_success_url(self):
-        return reverse("users:profile")
-
-    def get_login_url(self):
-        return reverse("users:login")
+    success_url = reverse_lazy("users:profile")
 
     def get_object(self, queryset=None):
         return self.request.user
 
 
-class UserCreate(CreateView):
+class UserCreate(UserPassesTestMixin, CreateView):
     form_class = UserCreateForm
-    template_name = 'users/signup.html'
-    success_url = reverse_lazy('users:login')
+    template_name = "users/signup.html"
+    success_url = reverse_lazy("users:login")
+
+    def test_func(self) -> bool | None:
+        if self.request.user.is_authenticated:
+            return False
+        return True
 
 
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "users/change_password.html"
-
-    def get_success_url(self):
-        return reverse("users:profile")
-
-    def get_login_url(self):
-        return reverse("users:login")
+    form_class = CustomPasswordChangeForm
+    success_url = reverse_lazy("users:profile")
 
 
 class UserListView(PermissionRequiredMixin, ListView):
@@ -67,16 +57,7 @@ class UserListView(PermissionRequiredMixin, ListView):
 class UserUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = ["users.change_customuser", "users.view_customuser"]
     model = User
-    fields = [
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "profile_image",
-        "team",
-        "is_staff",
-    ]
+    form_class = UserUpdateForm
     template_name = "users/profile_update.html"
     success_url = reverse_lazy("users:user_list")
 
@@ -91,9 +72,7 @@ class UserUpdateView(PermissionRequiredMixin, UpdateView):
         affected_user = self.get_object()
         if not self.request.user.is_superuser or affected_user.is_superuser:
             if "is_staff" in request.POST:
-                return JsonResponse(
-                    {"error": "You are not authorized to modify this field"},
-                    status=403)
+                return JsonResponse({"error": "You are not authorized to modify this field"}, status=403)
         return super().post(request, *args, **kwargs)
 
 
