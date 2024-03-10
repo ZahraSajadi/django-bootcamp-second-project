@@ -44,18 +44,60 @@ class ReservationForm(forms.ModelForm):
         model = Reservation
         exclude = ["pk"]
         widgets = {
-            "reserver_user": forms.HiddenInput(attrs={"id": "reserver_user", "name": "reserver_user"}),
+            "reserver_user": forms.HiddenInput(
+                attrs={
+                    "id": "reserver_user",
+                    "name": "reserver_user",
+                    "class": "form-control",
+                    "rows": 3,
+                    "style": "width: 500px;",
+                }
+            ),
             "start_date": forms.TextInput(
-                attrs={"class": "input", "id": "start-time", "name": "start-time", "placeholder": "Select time..."}
+                attrs={
+                    "class": "form-control input",
+                    "style": "width: 160px;",
+                    "id": "start-time",
+                    "name": "start-time",
+                    "placeholder": "Select time...",
+                }
             ),
             "end_date": forms.TextInput(
-                attrs={"class": "input", "id": "end-time", "name": "end-time", "placeholder": "Select time..."}
+                attrs={
+                    "class": "form-control input",
+                    "style": "width: 160px;",
+                    "id": "end-time",
+                    "name": "end-time",
+                    "placeholder": "Select time...",
+                }
             ),
             "note": forms.Textarea(
-                attrs={"id": "note", "name": "note", "placeholder": "Dont forget the tea!!!", "rows": 3, "cols": 25}
+                attrs={
+                    "id": "note",
+                    "name": "note",
+                    "placeholder": "Dont forget the tea!!!",
+                    "rows": 3,
+                    "cols": 25,
+                    "class": "form-control",
+                    "style": "width: 300px;",
+                }
             ),
-            "team": forms.Select(attrs={"id": "reserve-team", "name": "reserve-team"}),
-            "room": forms.Select(attrs={"id": "reserve-room", "name": "reserve-room"}),
+            "team": forms.Select(
+                attrs={
+                    "id": "reserve-team",
+                    "name": "reserve-team",
+                    "class": "form-control",
+                    "style": "width: 100px;",
+                }
+            ),
+            "room": forms.Select(
+                attrs={
+                    "id": "reserve-room",
+                    "name": "reserve-room",
+                    "class": "form-control",
+                    "style": "width: 100px;",
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
