@@ -109,6 +109,7 @@ class TeamDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = "users.delete_team"
     model = Team
     success_url = reverse_lazy("users:team_list")
+    template_name = "shared/confirm_delete.html"
 
 
 # class PhoneLoginView(View):

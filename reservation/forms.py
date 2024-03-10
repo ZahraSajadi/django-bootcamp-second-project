@@ -2,9 +2,10 @@ from datetime import datetime, timezone, time, timedelta
 from typing import Any
 from django import forms
 
-from .models import Comment, Rating, Reservation
+from .models import Comment, Rating, Reservation, Room
 from django.forms.widgets import NumberInput
 from django.db.models import Q
+from shared.forms import BootstrapModelForm
 
 
 class SubmitRatingForm(forms.ModelForm):
@@ -147,6 +148,17 @@ class ReservationForm(forms.ModelForm):
                     | Q(end_date__range=(start + timedelta(seconds=1), end))
                 )
             ).all()
+            for reservation in overlapping_reservations:
+                print(reservation)
         if overlapping_reservations:
             raise forms.ValidationError("Overlapping Reservation!")
         return cleaned_data
+
+
+class RoomCreateForm(BootstrapModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = Room
+        fields = ["name", "capacity", "is_active", "description"]
