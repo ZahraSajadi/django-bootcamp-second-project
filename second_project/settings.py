@@ -139,5 +139,5 @@ LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "users:login_with_username"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 CRONJOBS = [
-    ("*/120 * * * *", "reservation.management.commands.reservation_email_reminder"),
+    ("*/59 * * * *", "reservation.management.commands.reservation_email_reminder"),
 ]
