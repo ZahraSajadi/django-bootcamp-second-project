@@ -25,6 +25,7 @@ class BootstrapModelForm(forms.ModelForm):
                 UserMultipleChoiceField,
                 forms.MultipleChoiceField,
                 forms.CheckboxSelectMultiple,
+                forms.CheckboxInput,
             ]:
                 field.widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
 
