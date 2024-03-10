@@ -2,7 +2,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 from users.views import UserCreate
 from .views import (
-    PhoneLoginView,
+    EnterOTPView,
+    RequestOTPView,
     TeamCreateView,
     TeamDeleteView,
     TeamListView,
@@ -18,7 +19,8 @@ from .forms import CustomAuthenticationForm
 app_name = "users"
 
 urlpatterns = [
-    path("login/", PhoneLoginView.as_view(template_name="users/login.html"), name="login"),
+    path("login/", RequestOTPView.as_view(), name="login"),
+    path("login/otp/", EnterOTPView.as_view(), name="otp"),
     path(
         "login/username/",
         LoginView.as_view(

@@ -5,12 +5,29 @@
       <div class="col-12">
           <form action="" method="post">
               {% csrf_token %}
+              <input type="hidden" name="email" value="{{ email }}">
+              <input type="hidden" name="phone" value="{{ phone }}">
               {{ form.as_p }}
+              {% url 'users:otp' as otp_url %}
+              {% if request.path == otp_url %}
+                <div style="margin:10px;" id="timerContainer"></div>
+              {% endif %}
               <button type="submit" class="btn btn-success">
                   Login
               </button>
+              {% url 'users:login_with_username' as login_with_username %}
+              {% url 'users:login' as login_url %}
+              {% if request.path == login_with_username %}
+              <button type="button" onclick="location.href='{{ login_url }}'" class="btn btn-primary">
+                Login with OTP
+              </button>
+              {% elif request.path == login_url%}
+              <button type="button" id="loginButton" onclick="location.href='{{ login_with_username }}'" class="btn btn-primary">
+                Login with Password
+              </button>
+              {% endif %}
               <small style="margin-left:10px;">Don't Have an account?</small>
-              <button type="button", onclick="location.href='{% url "users:sign_up" %}'" class="btn btn-link btn-sm">
+              <button type="button", onclick="location.href='{% url 'users:sign_up'%}'" class="btn btn-link btn-sm">
                   Create one here
                 </button>
               {% if messages %}
@@ -24,4 +41,29 @@
       </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var timerContainer = document.getElementById('timerContainer');
+    var loginButton = document.getElementById('loginButton');
+
+    var startTime = Date.now();
+    var endTime = startTime + (2 * 60 * 1000); // 2 minutes
+
+    function updateTimer() {
+        var remainingTime = endTime - Date.now();
+        if (remainingTime <= 0) {
+            timerContainer.innerHTML = 'OTP expired!';
+            loginButton.disabled = true;
+        } else {
+            var minutes = Math.floor(remainingTime / (60 * 1000));
+            var seconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
+            timerContainer.innerHTML = 'Time remaining: ' + minutes + ' minutes ' + seconds + ' seconds';
+            setTimeout(updateTimer, 1000);
+        }
+    }
+
+    updateTimer();
+});
+</script>
 {% endblock body %}

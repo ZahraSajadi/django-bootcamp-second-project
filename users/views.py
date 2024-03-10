@@ -1,22 +1,23 @@
+from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView, CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.contrib.auth import get_user_model
-from django.contrib import messages
-from utils.db.model_helper import generate_otp
-from .models import OTP, Team
+from django.contrib.auth import get_user_model, login
+from .models import Team
 from .forms import (
     CustomPasswordChangeForm,
-    PhoneLoginForm,
+    EnterOTPForm,
     ProfileUpdateForm,
+    RequestOTPForm,
     TeamCreateUpdateForm,
     UserCreateForm,
     UserUpdateForm,
 )
+from .mixins import UserNotAuthenticatedMixin
 
 User = get_user_model()
 
@@ -40,15 +41,10 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
 
-class UserCreate(UserPassesTestMixin, CreateView):
+class UserCreate(UserNotAuthenticatedMixin, CreateView):
     form_class = UserCreateForm
     template_name = "users/signup.html"
-    success_url = reverse_lazy("users:login")
-
-    def test_func(self) -> bool | None:
-        if self.request.user.is_authenticated:
-            return False
-        return True
+    success_url = reverse_lazy("users:login_with_username")
 
 
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
@@ -115,9 +111,34 @@ class TeamDeleteView(PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy("users:team_list")
 
 
-class PhoneLoginView(View):
+# class PhoneLoginView(View):
+#     template_name = "users/login.html"
+#     form_class = PhoneLoginForm
+
+#     def get(self, request):
+#         form = self.form_class()
+#         return render(request, self.template_name, {"form": form})
+
+#     def post(self, request):
+#         form = self.form_class(request.POST)
+#         if form.is_valid():
+#             phone = form.cleaned_data["phone"]
+#             user = User.objects.filter(phone=phone).first()
+
+#             if user:
+#                 otp_code = generate_otp()
+#                 OTP.objects.create(user=user, otp=otp_code)
+#                 print(f"OTP for {user.phone}: {otp_code}")
+#                 messages.success(request, "OTP has been sent to your phone.")
+#                 return redirect("profile")
+#             else:
+#                 messages.error(request, "User with this phone number does not exist.")
+#         return render(request, self.template_name, {"form": form})
+
+
+class RequestOTPView(UserNotAuthenticatedMixin, View):
     template_name = "users/login.html"
-    form_class = PhoneLoginForm
+    form_class = RequestOTPForm
 
     def get(self, request):
         form = self.form_class()
@@ -125,19 +146,53 @@ class PhoneLoginView(View):
 
     def post(self, request):
         form = self.form_class(request.POST)
+        context = {}
+        context["email"] = request.POST.get("email", None)
+        context["phone"] = request.POST.get("phone", None)
         if form.is_valid():
-            phone = form.cleaned_data["phone"]
-            user = User.objects.filter(phone=phone).first()
+            otp = form.save()
+            if context["email"]:
+                send_mail(
+                    "OTP Code for unChained",
+                    message=f"Your otp code is: {otp.otp}",
+                    from_email="noreply@unchained.com",
+                    recipient_list=(otp.user.email,),
+                )
+            if context["phone"]:
+                print(f"SMS Sent\nYour otp code is: {otp.otp}")
+            redirect_url = reverse("users:otp") + f"?email={context.get('email', '')}&phone={context.get('phone', '')}"
+            return redirect(redirect_url)
+        context["form"] = form
+        return render(request, self.template_name, context)
 
-            if user:
-                otp_code = generate_otp()
-                OTP.objects.create(user=user, otp=otp_code)
-                print(f"OTP for {user.phone}: {otp_code}")
-                messages.success(request, "OTP has been sent to your phone.")
-                return redirect("profile")
-            else:
-                messages.error(request, "User with this phone number does not exist.")
-        return render(request, self.template_name, {"form": form})
+
+class EnterOTPView(UserNotAuthenticatedMixin, View):
+    template_name = "users/login.html"
+    form_class = EnterOTPForm
+
+    def get(self, request):
+        context = {}
+        context["email"] = request.GET.get("email", "")
+        context["phone"] = request.GET.get("phone", "")
+        form = self.form_class(user_info=context)
+        context["form"] = form
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        email = request.POST.get("email", "")
+        phone = request.POST.get("phone", "")
+        user_info = {}
+        if email:
+            user_info["email"] = email
+        if phone:
+            user_info["phone"] = phone
+        form = self.form_class(request.POST, user_info=user_info)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            login(request, user)
+            return redirect("index")
+        user_info["form"] = form
+        return render(request, self.template_name, user_info)
 
 
 # class UsernameLoginView(View):

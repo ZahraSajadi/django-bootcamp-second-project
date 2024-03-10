@@ -2,9 +2,10 @@ from typing import Any
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from .models import Team
+from .models import OTP, Team
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
+from utils.db.model_helper import phone_regex, verify_otp
 
 User = get_user_model()
 
@@ -139,3 +140,77 @@ class CustomAuthenticationForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
         self.fields["password"].widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
+
+
+class RequestOTPForm(forms.Form):
+    phone = forms.CharField(
+        required=False,
+        validators=[phone_regex],
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "style": "width: 300px;",
+                "pattern": "\d*",
+                "oninput": "this.value = this.value.replace(/[^0-9]/g, '')",
+            }
+        ),
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={"class": "form-control", "style": "width: 300px;"}),
+    )
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email", None)
+        phone = cleaned_data.get("phone", None)
+        if not email and not phone:
+            raise forms.ValidationError("You have to enter your email or phone number!")
+        if phone:
+            user = User.objects.filter(phone=phone).first()
+        elif email:
+            user = User.objects.filter(email=email).first()
+        if not user:
+            raise forms.ValidationError("User with entered info not found.")
+        cleaned_data["user"] = user
+
+    def save(self, commit: bool = True) -> Any:
+        user = self.cleaned_data["user"]
+        otp = OTP(user=user)
+        if commit:
+            otp.save()
+        return otp
+
+
+class EnterOTPForm(forms.Form):
+    code = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "style": "width: 300px;",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user_info=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user_info = user_info
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = super().clean()
+        if "phone" in self.user_info:
+            user = User.objects.filter(phone=self.user_info["phone"]).first()
+        elif "email" in self.user_info:
+            user = User.objects.filter(email=self.user_info["email"]).first()
+        else:
+            raise forms.ValidationError("User not found!")
+        if not user:
+            raise forms.ValidationError("User not found!")
+        otp = OTP.objects.filter(user=user).order_by("-created_at").first()
+        if not otp:
+            raise forms.ValidationError("Otp not found please request an opt again!")
+        if not verify_otp(otp, cleaned_data["code"]):
+            raise forms.ValidationError("OTP wrong or expired, please try again")
+        cleaned_data["user"] = user
+        return cleaned_data

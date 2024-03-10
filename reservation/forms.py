@@ -147,8 +147,6 @@ class ReservationForm(forms.ModelForm):
                     | Q(end_date__range=(start + timedelta(seconds=1), end))
                 )
             ).all()
-            for reservation in overlapping_reservations:
-                print(reservation)
         if overlapping_reservations:
             raise forms.ValidationError("Overlapping Reservation!")
         return cleaned_data
