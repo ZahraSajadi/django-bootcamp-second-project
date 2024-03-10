@@ -1,16 +1,23 @@
-{% extends "_base.html" %} {% block title %}{% endblock title %} {% block body%}
-<form method="post">
-  {% csrf_token %}
-
-  {% if messages %}
-  <ul class="messages">
-    {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-</form>
+{% extends "_base.html" %}
+{% block body%}
+<div class="container p-4">
+  <div class="row">
+      <div class="col-12">
+          <form action="" method="post">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <button type="submit" class="btn btn-primary">
+                  Login
+              </button>
+              {% if messages %}
+              <ul class="messages">
+                {% for message in messages %}
+                  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+          </form>
+      </div>
+  </div>
+</div>
 {% endblock body %}

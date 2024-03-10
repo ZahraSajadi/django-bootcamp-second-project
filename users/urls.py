@@ -13,12 +13,20 @@ from .views import (
     ProfileUpdateView,
     CustomPasswordChangeView,
 )
+from .forms import CustomAuthenticationForm
 
 app_name = "users"
 
 urlpatterns = [
     path("login/", PhoneLoginView.as_view(template_name="users/login.html"), name="login"),
-    path("login/username/", LoginView.as_view(template_name="users/login.html"), name="login_with_username"),
+    path(
+        "login/username/",
+        LoginView.as_view(
+            authentication_form=CustomAuthenticationForm,
+            template_name="users/login.html",
+        ),
+        name="login_with_username",
+    ),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path(

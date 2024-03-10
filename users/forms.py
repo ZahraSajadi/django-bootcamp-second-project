@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from .models import Team
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
-from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
 
 User = get_user_model()
 
@@ -132,3 +132,10 @@ class PhoneLoginForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
     )
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
+        self.fields["password"].widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
