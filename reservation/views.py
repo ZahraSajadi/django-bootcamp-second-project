@@ -105,14 +105,28 @@ class ReservationListJson(LoginRequiredMixin, View):
         return JsonResponse({"events": events}, safe=False)
 
 
-class ReservationListView(LoginRequiredMixin, View):
+class ReservationListView(UserPassesTestMixin, View):
+    def test_func(self) -> bool | None:
+        user = self.request.user
+        if self.request.method == "POST":
+            if user.has_perm("reservation.add_reservation"):
+                return True
+            elif user.has_perm("reservation.add_reservation_self_team"):
+                if int(self.request.POST["team"]) == user.team.id:
+                    return True
+            return False
+        return True
+
     def get_data(self, request):
         resources = Room.objects.all()
         resources = [{"id": room.id, "title": room.name} for room in resources]
         return resources
 
     def get(self, request, *args, **kwargs):
-        team = Team.objects.all() if request.user.is_admin() else request.user.team
+        if self.request.user.has_perm("reservation:add_reservation"):
+            team = Team.objects.all()
+        else:
+            team = self.user.team
         form = ReservationForm(
             initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
         )
@@ -124,11 +138,8 @@ class ReservationListView(LoginRequiredMixin, View):
         form = ReservationForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
-        else:
-            errors = form.errors
-            print(errors)
         data = self.get_data(request)
-        context = {"resources": data[0], "perms": data[1], "form": form}
+        context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
 

@@ -54,6 +54,7 @@
 
             {% if form.errors %}
               <ul class="errorlist">
+                {{form.non_field_errors}}
                 {% for field in form %}
                   {% if field.errors %}
                     <li>{{ field.label_tag }}

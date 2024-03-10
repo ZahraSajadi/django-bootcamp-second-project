@@ -103,15 +103,27 @@ class ReservationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        if not self.user.is_admin():
+        if not self.user.has_perm("redervation:add_reservation"):
             self.fields["team"].widget = forms.HiddenInput(attrs={"id": "reserve-team", "name": "reserve-team"})
+
+    def clean_reserver_user(self):
+        return self.user
+
+    def clean_team(self):
+        team = self.cleaned_data.get("team")
+        if self.user.has_perm("reservation:reservation_add"):
+            pass
+        elif self.user.has_perm("reservation:reservation_add_self_team"):
+            team = self.user.team
+        else:
+            team = None
+        return team
 
     def clean(self):
         cleaned_data = super().clean()
         start = cleaned_data.get("start_date")
         end = cleaned_data.get("end_date")
         room = cleaned_data.get("room")
-        team = cleaned_data.get("team")
         now = datetime.now(timezone.utc)
         overlapping_reservations = None
 
@@ -119,27 +131,24 @@ class ReservationForm(forms.ModelForm):
             start_time = start.time()
             end_time = end.time()
             if end <= start:
-                raise forms.ValidationError("End date must be greater than start date.")
+                self.add_error("end_date", forms.ValidationError("End date must be greater than start date."))
             if start.date() != end.date():
-                raise forms.ValidationError("Start and end dates must be on the same day.")
-            if start_time < time(7) or end_time > time(22):
-                raise forms.ValidationError("Both start and end times should be between 7 am and 10 pm.")
+                self.add_error("end_date", forms.ValidationError("Start and end dates must be on the same day."))
+            if start_time < time(7) or start_time > time(22):
+                self.add_error("start_date", forms.ValidationError("Start time should be between 7 am and 10 pm."))
+            if end_time < time(7) or end_time > time(22):
+                self.add_error("start_date", forms.ValidationError("End time should be between 7 am and 10 pm."))
             if end <= now:
-                raise forms.ValidationError("The reservation time is not valid.")
+                self.add_error("end_date", forms.ValidationError("The reservation time is not valid."))
             overlapping_reservations = Reservation.objects.filter(
                 Q(room=room)
                 & (
                     Q(start_date__range=(start, end - timedelta(seconds=1)))
                     | Q(end_date__range=(start + timedelta(seconds=1), end))
                 )
-            )
+            ).all()
+            for reservation in overlapping_reservations:
+                print(reservation)
         if overlapping_reservations:
             raise forms.ValidationError("Overlapping Reservation!")
-
-        if not self.user.is_admin():
-            if not self.user.is_team_leader():
-                raise forms.ValidationError("Permission denied!")
-            elif self.user.team != team:
-                raise forms.ValidationError("Permission denied!")
-
         return cleaned_data

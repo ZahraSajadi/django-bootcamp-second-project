@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from utils.db.model_helper import generate_otp, phone_regex, user_image_path
@@ -17,16 +17,6 @@ class CustomUser(AbstractUser):
             return f"{self.first_name} {self.last_name}"
 
         return self.username
-
-    def is_admin(self):
-        group_name = "Admins"
-        group = Group.objects.get(name=group_name)
-        return self.groups.filter(pk=group.pk).exists()
-
-    def is_team_leader(self):
-        group_name = "Team Leaders"
-        group = Group.objects.get(name=group_name)
-        return self.groups.filter(pk=group.pk).exists()
 
 
 class Team(models.Model):
