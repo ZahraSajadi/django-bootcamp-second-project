@@ -126,7 +126,7 @@ class ReservationListView(UserPassesTestMixin, View):
         if self.request.user.has_perm("reservation:add_reservation"):
             team = Team.objects.all()
         else:
-            team = self.user.team
+            team = request.user.team
         form = ReservationForm(
             initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
         )

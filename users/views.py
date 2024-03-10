@@ -1,4 +1,3 @@
-from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -6,7 +5,7 @@ from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 from utils.db.model_helper import generate_otp
 from .models import OTP, Team
@@ -141,25 +140,25 @@ class PhoneLoginView(View):
         return render(request, self.template_name, {"form": form})
 
 
-class UsernameLoginView(View):
-    template_name = "users/login_with_username.html"
-    form_class = AuthenticationForm
+# class UsernameLoginView(View):
+#     template_name = "users/login_with_username.html"
+#     form_class = AuthenticationForm
 
-    def get(self, request, *args, **kwargs):
-        form = self.form_class(request, data=request.POST or None)
-        return render(request, self.template_name, {"form": form})
+#     def get(self, request, *args, **kwargs):
+#         form = self.form_class(request, data=request.POST or None)
+#         return render(request, self.template_name, {"form": form})
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get("username")
-            password = form.cleaned_data.get("password")
-            user = authenticate(request, username=username, password=password)
+#     def post(self, request, *args, **kwargs):
+#         form = self.form_class(request, data=request.POST)
+#         if form.is_valid():
+#             username = form.cleaned_data.get("username")
+#             password = form.cleaned_data.get("password")
+#             user = authenticate(request, username=username, password=password)
 
-            if user is not None:
-                login(request, user)
-                messages.success(request, "You are now logged in.")
-                return redirect("profile")
-            else:
-                messages.error(request, "Invalid username or password.")
-        return render(request, self.template_name, {"form": form})
+#             if user is not None:
+#                 login(request, user)
+#                 messages.success(request, "You are now logged in.")
+#                 return redirect("profile")
+#             else:
+#                 messages.error(request, "Invalid username or password.")
+#         return render(request, self.template_name, {"form": form})
