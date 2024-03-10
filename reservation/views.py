@@ -109,8 +109,7 @@ class ReservationListView(LoginRequiredMixin, View):
     def get_data(self, request):
         resources = Room.objects.all()
         resources = [{"id": room.id, "title": room.name} for room in resources]
-        perms = request.user.get_user_permissions()
-        return resources, perms
+        return resources
 
     def get(self, request, *args, **kwargs):
         team = Team.objects.all() if request.user.is_admin() else request.user.team
@@ -118,7 +117,7 @@ class ReservationListView(LoginRequiredMixin, View):
             initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
         )
         data = self.get_data(request)
-        context = {"resources": data[0], "perms": data[1], "form": form}
+        context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
     def post(self, request, *args, **kwargs):
