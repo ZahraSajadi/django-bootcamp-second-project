@@ -27,7 +27,7 @@ class ProfileViewTest(TestCase):
     def test_profile_view_unauthenticated(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        expected_url = reverse("users:login") + "?next=" + self.url
+        expected_url = reverse("users:login_with_username") + "?next=" + self.url
         self.assertRedirects(response, expected_url)
 
 
