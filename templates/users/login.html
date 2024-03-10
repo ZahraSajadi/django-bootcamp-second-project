@@ -6,9 +6,13 @@
           <form action="" method="post">
               {% csrf_token %}
               {{ form.as_p }}
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-success">
                   Login
               </button>
+              <small style="margin-left:10px;">Don't Have an account?</small>
+              <button type="button", onclick="location.href='{% url "users:sign_up" %}'" class="btn btn-link btn-sm">
+                  Create one here
+                </button>
               {% if messages %}
               <ul class="messages">
                 {% for message in messages %}
