@@ -1,13 +1,17 @@
+import datetime
 from typing import Any
 from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
-from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+
+from users.models import Team
 from .models import Comment, Reservation, Room, Rating
-from .forms import SubmitCommentForm, SubmitRatingForm
+from .forms import SubmitCommentForm, SubmitRatingForm, ReservationForm
 
 
 class RoomDetailView(DetailView):
@@ -79,7 +83,54 @@ class RoomUpdateView(PermissionRequiredMixin, UpdateView): ...
 class RoomDeleteView(PermissionRequiredMixin, DeleteView): ...
 
 
-class ReservationListView(PermissionRequiredMixin, ListView): ...
+class ReservationListJson(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        today = datetime.datetime.now().date()
+        date = request.GET.get("date")
+        if not date:
+            date = today
+        reservations = Reservation.objects.filter(start_date__date=date)
+        events = [
+            {
+                "id": reservation.id,
+                "title": reservation.note,
+                "start": reservation.start_date.isoformat(),
+                "end": reservation.end_date.isoformat(),
+                "resourceId": reservation.room.id,
+                "backgroundColor": "green",
+                "borderColor": "green",
+            }
+            for reservation in reservations
+        ]
+        return JsonResponse({"events": events}, safe=False)
+
+
+class ReservationListView(LoginRequiredMixin, View):
+    def get_data(self, request):
+        resources = Room.objects.all()
+        resources = [{"id": room.id, "title": room.name} for room in resources]
+        perms = request.user.get_user_permissions()
+        return resources, perms
+
+    def get(self, request, *args, **kwargs):
+        team = Team.objects.all() if request.user.is_admin() else request.user.team
+        form = ReservationForm(
+            initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
+        )
+        data = self.get_data(request)
+        context = {"resources": data[0], "perms": data[1], "form": form}
+        return render(request, "reservation/reservation_list.html", context=context)
+
+    def post(self, request, *args, **kwargs):
+        form = ReservationForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+        else:
+            errors = form.errors
+            print(errors)
+        data = self.get_data(request)
+        context = {"resources": data[0], "perms": data[1], "form": form}
+        return render(request, "reservation/reservation_list.html", context=context)
 
 
 class ReservationDetailView(PermissionRequiredMixin, DetailView): ...

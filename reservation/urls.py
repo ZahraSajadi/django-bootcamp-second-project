@@ -3,6 +3,7 @@ from .views import (
     ReservationDeleteView,
     ReservationDetailView,
     ReservationListView,
+    ReservationListJson,
     RoomCreateView,
     RoomDeleteView,
     RoomListView,
@@ -30,6 +31,7 @@ urlpatterns = [
     path("room/<int:pk>", RoomDetailView.as_view(), name="room_detail"),
     path("room/<int:pk>/update", RoomUpdateView.as_view(), name="room_update"),
     path("room/<int:pk>/delete", RoomDeleteView.as_view(), name="room_delete"),
+    path("json/", ReservationListJson.as_view(), name="reservation_json"),
     path("list/", ReservationListView.as_view(), name="reservation_list"),
     path(
         "<int:pk>",
