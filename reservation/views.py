@@ -109,6 +109,7 @@ class ReservationListJson(LoginRequiredMixin, View):
             {
                 "id": reservation.id,
                 "title": reservation.team.name,
+                "room": reservation.room.name,
                 "start": reservation.start_date.isoformat(),
                 "end": reservation.end_date.isoformat(),
                 "resourceId": reservation.room.id,
@@ -121,7 +122,6 @@ class ReservationListJson(LoginRequiredMixin, View):
             }
             for reservation in reservations
         ]
-        print(events)
         return JsonResponse({"events": events}, safe=False)
 
 

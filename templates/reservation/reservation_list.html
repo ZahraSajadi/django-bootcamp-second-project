@@ -250,54 +250,55 @@
     function openDialog(event) {
       var dialog = document.getElementById('dialog');
       var reservationId = event.id;
-      var buttons = [
-        {
+      var buttons = [{
           text: 'Cancel',
-          click: function() {
-            $(dialog).dialog('close');
+          class: 'btn btn-primary',
+          click: function () {
+              $(dialog).dialog('close');
           }
-        }
-      ];
+      }];
       if (delete_perm) {
-        buttons.unshift({
-          text: 'Delete',
-          class: 'delete-button',
-          click: function() {
-            var url = '/reservation/'+reservationId+'/delete';
-            window.location.href = url;
-<!--            $.ajax({-->
-<!--              url: '/reservation/'+reservationId+'/delete',-->
-<!--              type: 'POST',-->
-<!--              headers: {-->
-<!--                'Content-Type': 'application/json',-->
-<!--                'X-CSRFToken': getCookie('csrftoken')-->
-<!--              },-->
-<!--              success: function(response) {-->
-<!--                calendar.fullCalendar('refetchEvents');-->
-<!--              },-->
-<!--              error: function(xhr, status, error) {-->
-<!--                console.log('Error:', error);-->
-<!--              }-->
-<!--            });-->
-            $(dialog).dialog('close');
-          }
-        });
+          buttons.unshift({
+              text: 'Delete',
+              class: 'btn btn-danger delete-button',
+              click: function () {
+                  var url = '/reservation/' + reservationId + '/delete';
+                  window.location.href = url;
+                  // Add AJAX request if needed
+                  $(dialog).dialog('close');
+              }
+          });
       }
-      dialog.innerHTML = '<p>Room: ' + event.title + '</p>' +
-                              '<p>Team: ' + event.title + '</p>' +
-                              '<p>Reserver: ' + event.extendedProps.reserver + '</p>' +
-                              '<p>Note: ' + event.extendedProps.note + '</p>' +
-                              '<p>Start Time: ' + event.start.format('YYYY-MM-DD HH:mm') + '</p>' +
-                              '<p>End Time: ' + event.end.format('YYYY-MM-DD HH:mm') + '</p>';
+      dialog.innerHTML = '<div class="custom-dialog">' +
+          '<div class="modal-dialog modal-dialog-centered">' +
+          '<div class="modal-content">' +
+          '<div class="modal-header">' +
+          '<h5 class="modal-title">Reservation for ' + event.title + '</h5>' +
+          '</div>' +
+          '<div class="modal-body">' +
+          '<p>Room: ' + event.room + '</p>' +
+          '<p>Team: ' + event.title + '</p>' +
+          '<p>Reserver: ' + event.extendedProps.reserver + '</p>' +
+          '<p>Note: ' + event.extendedProps.note + '</p>' +
+          '<p>Start Time: ' + event.start.format('YYYY-MM-DD HH:mm') + '</p>' +
+          '<p>End Time: ' + event.end.format('YYYY-MM-DD HH:mm') + '</p>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '</div>';
 
       $(dialog).dialog({
-        modal: false,
-        title: 'Reservation for ' + event.title,
-        width: 400,
-        height: 300,
-        buttons: buttons
+          modal: false,
+          title: 'Reservation for ' + event.title,
+          width: 400,
+          height: 300,
+          buttons: buttons
       });
-    }
+
+  }
+
   </script>
 
   {% endblock body %}
