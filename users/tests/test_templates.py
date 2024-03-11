@@ -1,9 +1,9 @@
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.contrib.auth import get_user_model
-from users.models import Team
+from users.models import OTP, Team
 from second_project.settings import ADMINS_GROUP_NAME
 
 User = get_user_model()
@@ -348,3 +348,82 @@ class SignupTemplateTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(email="test1@test.com").exists())
         self.assertContains(response, "User with this Phone already exists.")
+
+
+class LoginTemplateTestCase(TestCase):
+    def setUp(self) -> None:
+        call_command("create_groups_and_permissions")
+        self.user = User.objects.create_user(
+            username="user",
+            password="password",
+            email="email@email.com",
+            phone="09123456789",
+        )
+
+    def test_login_page(self):
+        response = self.client.get(reverse("users:login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Email:")
+        self.assertContains(response, "Phone:")
+        self.assertTemplateUsed("users/login.html")
+
+    def test_login_with_username_page(self):
+        response = self.client.get(reverse("users:login_with_username"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Username:")
+        self.assertContains(response, "Password:")
+        self.assertTemplateUsed("users/login.html")
+
+    def test_otp_page(self):
+        response = self.client.get(reverse("users:otp"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Code:")
+        self.assertContains(response, "Time remaining:")
+        self.assertTemplateUsed("users/login.html")
+
+    def test_login_with_username(self):
+        data = {"username": self.user.username, "password": "password"}
+        response = self.client.post(reverse("users:login_with_username"), data)
+        self.assertRedirects(response, reverse_lazy("index"))
+        response = self.client.get(reverse("index"))
+        self.assertContains(response, "Upcoming")
+
+    def test_login_with_username_wrong_password(self):
+        data = {"username": self.user.username, "password": "p"}
+        response = self.client.post(reverse("users:login_with_username"), data)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("index"))
+        self.assertRedirects(response, reverse_lazy("users:login_with_username") + "?next=/")
+
+    def test_login_with_otp_email(self):
+        data = {"email": self.user.email, "phone": ""}
+        response = self.client.post(reverse("users:login"), data)
+        self.assertRedirects(response, reverse_lazy("users:otp") + f'?email={data["email"]}&phone={data["phone"]}')
+        otp = OTP.objects.filter(user=self.user).order_by("-created_at").first()
+        data["code"] = otp.otp
+        response = self.client.post(reverse("users:otp"), data)
+        self.assertRedirects(response, reverse_lazy("index"))
+        response = self.client.get(reverse("index"))
+        self.assertContains(response, "Upcoming")
+
+    def test_login_with_otp_phone(self):
+        data = {"email": "", "phone": self.user.phone}
+        response = self.client.post(reverse("users:login"), data)
+        self.assertRedirects(response, reverse_lazy("users:otp") + f'?email={data["email"]}&phone={data["phone"]}')
+        otp = OTP.objects.filter(user=self.user).order_by("-created_at").first()
+        data["code"] = otp.otp
+        response = self.client.post(reverse("users:otp"), data)
+        self.assertRedirects(response, reverse_lazy("index"))
+        response = self.client.get(reverse("index"))
+        self.assertContains(response, "Upcoming")
+
+    def test_login_with_otp_email_wrong_code(self):
+        data = {"email": self.user.email, "phone": ""}
+        response = self.client.post(reverse("users:login"), data)
+        self.assertRedirects(response, reverse_lazy("users:otp") + f'?email={data["email"]}&phone={data["phone"]}')
+        data["code"] = "123456"
+        response = self.client.post(reverse("users:otp"), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "OTP wrong or expired, please try again")
+        response = self.client.get(reverse("index"))
+        self.assertEqual(response.status_code, 302)
