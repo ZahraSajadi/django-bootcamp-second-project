@@ -201,11 +201,6 @@ class TeamManagementViewsTestCase(TestCase):
 
     def test_team_delete_view_admin_user(self):
         self.client.login(username=self.admin.username, password="password")
-        data = {"name": self.team.name, "leader": self.admin.id, "members": [self.user.id]}
-        request = self.factory.post(reverse("users:team_update", kwargs={"pk": self.team.id}), data)
-        request.user = self.admin
-        request.session = self.client.session
-        response = TeamUpdateView.as_view()(request, pk=self.team.id)
         request = self.factory.post(reverse("users:team_delete", kwargs={"pk": self.team.id}))
         request.user = self.admin
         request.session = self.client.session
