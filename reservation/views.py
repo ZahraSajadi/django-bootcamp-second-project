@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.http import JsonResponse
@@ -98,7 +99,7 @@ class RoomDeleteView(PermissionRequiredMixin, DeleteView):
     template_name = "shared/confirm_delete.html"
 
 
-class ReservationListJson(LoginRequiredMixin, View):
+class ReservationListJson(View):
     def get(self, request, *args, **kwargs):
         today = datetime.datetime.now().date()
         date = request.GET.get("date")
@@ -137,21 +138,28 @@ class ReservationListView(UserPassesTestMixin, View):
             return False
         return True
 
-    def get_data(self, request):
+    def get_data(self):
         resources = Room.objects.filter(is_active=True)
         resources = [{"id": room.id, "title": room.name} for room in resources]
         return resources
 
     def get(self, request, *args, **kwargs):
-        if self.request.user.has_perm("reservation:add_reservation"):
-            team = Team.objects.all()
+        data = self.get_data()
+        team = None
+
+        if self.request.user is not AnonymousUser:
+            if self.request.user.has_perm("reservation:add_reservation"):
+                team = Team.objects.all()
+            elif self.request.user.has_perm("reservation:add_reservation_self_team"):
+                team = request.user.team
+
+        if team:
+            form = ReservationForm(
+                initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
+            )
+            context = {"resources": data, "form": form, "user": request.user}
         else:
-            team = request.user.team
-        form = ReservationForm(
-            initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
-        )
-        data = self.get_data(request)
-        context = {"resources": data, "form": form, "user": request.user}
+            context = {"resources": data, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
     def post(self, request, *args, **kwargs):
@@ -160,7 +168,7 @@ class ReservationListView(UserPassesTestMixin, View):
             room = form.cleaned_data.get("room")
             if room.is_active:
                 form.save()
-        data = self.get_data(request)
+        data = self.get_data()
         context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
