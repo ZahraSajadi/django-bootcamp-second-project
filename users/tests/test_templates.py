@@ -219,6 +219,7 @@ class SignupTemplateTestCase(TestCase):
         self.assertContains(response, "Email address:")
         self.assertContains(response, "Password:")
         self.assertContains(response, "Password confirmation:")
+        self.assertTemplateUsed("users/signup.html")
 
     def test_sign_up_post_correct_format(self):
         data = {
