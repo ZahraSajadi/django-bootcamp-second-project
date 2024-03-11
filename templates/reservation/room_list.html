@@ -9,12 +9,12 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Id: {{ room.id }} - Name: {{ room.name }} - Capacity: {{ room.capacity }}
                     <div>
-                        <button style="margin:10px;" onclick="location.href='{% url "reservation:room_detail" room.id %}'" class="btn btn-primary btn-sm">Details</button>
+                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "reservation:room_detail" room.id %}'" class="btn btn-primary btn-sm">Details</button>
                         {% if perms.reservation.change_room %}
-                        <button style="margin:10px;" onclick="location.href='{% url "reservation:room_update" room.id %}'" class="btn btn-primary btn-sm">Edit</button>
+                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "reservation:room_update" room.id %}'" class="btn btn-primary btn-sm">Edit</button>
                         {% endif %}
                         {% if perms.reservation.delete_room %}
-                        <button style="margin:10px;" onclick="location.href='{% url "reservation:room_delete" room.id %}'" class="btn btn-danger btn-sm">Delete</button>
+                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "reservation:room_delete" room.id %}'" class="btn btn-danger btn-sm">Delete</button>
                         {% endif %}
                     </div>
                 </li>

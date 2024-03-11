@@ -11,12 +11,21 @@
                     <div>
                         {{ reservation }}
                     </div>
+                    {% if not reservation.room.is_active %}
                     <div>
-                        <button onclick="location.href='{% url 'reservation:room_detail' reservation.room.id %}'" class="btn btn-sm btn-primary">
+                        <span class="text-danger">X Room Not Available Right Now</span>
+                    </div>
+                    {% else %}
+                    <div>
+                        <span class="text-success">&#x2713; Room Available</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url 'reservation:room_detail' reservation.room.id %}'" class="btn btn-sm btn-primary">
                             Room Detail
                         </button>
                         {% if perms.reservation.delete_reservation or perms.reservation.delete_reservation_self_team %}
-                        <button onclick="location.href='{% url 'reservation:reservation_delete' reservation.id %}'" class="btn btn-sm btn-danger ml-2">
+                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url 'reservation:reservation_delete' reservation.id %}'" class="btn btn-sm btn-danger ml-2">
                             Delete
                         </button>
                         {% endif %}
