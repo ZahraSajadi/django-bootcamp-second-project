@@ -228,3 +228,82 @@ class IndexTemplateTestCase(TestCase):
         self.assertNotContains(response, "Team Management")
         self.assertNotContains(response, "User Management")
         self.assertNotContains(response, "Room Management")
+
+
+class RoomManagementTemplateTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.user = User.objects.create_user(username="user", password="password")
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty",
+            phone="empty",
+        )
+        self.admin.is_staff = True
+        self.admin.save()
+        self.room = Room.objects.create(name="Test Room", capacity=10)
+
+    def test_room_list_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("reservation:room_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_room_create_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("reservation:room_create"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_room_update_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("reservation:room_update", kwargs={"pk": self.room.id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_room_delete_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.get(reverse("reservation:room_delete", kwargs={"pk": self.room.id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_room_list_template(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.get(reverse("reservation:room_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.room)
+        self.assertTemplateUsed(response, "reservation/room_list.html")
+
+    def test_room_create_template(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.get(reverse("reservation:room_create"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "reservation/room_create.html")
+
+    def test_room_update_template(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.get(reverse("reservation:room_update", args=[self.room.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.room)
+        self.assertTemplateUsed(response, "reservation/room_update.html")
+
+    def test_room_create(self):
+        self.client.login(username=self.admin.username, password="password")
+        room_name = "New Room"
+        data = {"name": room_name, "capacity": 50, "is_active": "on", "description": "1"}
+        response = self.client.post(reverse("reservation:room_create"), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Room.objects.filter(name=room_name).exists())
+
+    def test_room_update(self):
+        self.client.login(username=self.admin.username, password="password")
+        new_room_name = "New Room Name"
+        data = {"name": new_room_name, "capacity": 50, "is_active": "on", "description": "1"}
+        response = self.client.post(reverse("reservation:room_update", kwargs={"pk": self.room.id}), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Room.objects.filter(name=new_room_name).exists())
+        self.assertFalse(Room.objects.filter(name=self.room.name).exists())
+
+    def test_room_delete(self):
+        self.client.login(username=self.admin.username, password="password")
+        self.assertTrue(Room.objects.filter(name=self.room.name).exists())
+        response = self.client.post(reverse("reservation:room_delete", kwargs={"pk": self.room.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Room.objects.filter(name=self.room.name).exists())

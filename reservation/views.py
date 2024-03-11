@@ -76,7 +76,7 @@ class RoomListView(PermissionRequiredMixin, ListView):
 
 
 class RoomCreateView(PermissionRequiredMixin, CreateView):
-    permission_required = "reservaion.change_room"
+    permission_required = "reservation.change_room"
     model = Room
     template_name = "reservation/room_create.html"
     form_class = RoomCreateForm
@@ -84,7 +84,7 @@ class RoomCreateView(PermissionRequiredMixin, CreateView):
 
 
 class RoomUpdateView(PermissionRequiredMixin, UpdateView):
-    permission_required = "reservaion.change_room"
+    permission_required = "reservation.change_room"
     model = Room
     template_name = "reservation/room_update.html"
     form_class = RoomCreateForm
@@ -92,7 +92,7 @@ class RoomUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class RoomDeleteView(PermissionRequiredMixin, DeleteView):
-    permission_required = "reservaion.delete_room"
+    permission_required = "reservation.delete_room"
     model = Room
     success_url = reverse_lazy("reservation:room_list")
     template_name = "shared/confirm_delete.html"
