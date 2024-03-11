@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
+from django.http import JsonResponse
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.timezone import timedelta
@@ -15,6 +16,8 @@ from reservation.views import (
     RatingSubmissionView,
     CommentSubmissionView,
     UserReservationListView,
+    ReservationListView,
+    ReservationListJson,
 )
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 
@@ -230,3 +233,164 @@ class UserReservationListViewTestCase(TestCase):
         self.assertContains(response, self.reservation1)
         self.assertNotContains(response, self.reservation2)
         self.assertContains(response, "Delete")
+
+
+class ReservationListViewTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.factory = RequestFactory()
+        self.team = Team.objects.create(name="Test Team")
+        self.room = Room.objects.create(name="Test Room", capacity=10, is_active=True)
+        Room.objects.create(name="Test Room2", capacity=10, is_active=False)
+
+        self.user = User.objects.create_user(
+            username="user", password="password", team=self.team, email="a@a.com", phone="empty1"
+        )
+        self.team_leader = User.objects.create_user(
+            username="teamleader", password="password", team=self.team, email="b@b.com", phone="empty2"
+        )
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="admin@admin.com",
+            phone="empty3",
+        )
+        self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        self.admin.is_staff = True
+        self.admin.save()
+        self.team_leaders_group.user_set.add(self.team_leader)
+
+    def test_test_func_with_get_request(self):
+        request = self.factory.get(reverse("reservation:reservation_list"))
+        request.user = AnonymousUser
+        view = ReservationListView()
+        view.request = request
+        self.assertTrue(view.test_func())
+
+    def test_test_func_with_permission(self):
+        request = self.factory.post(reverse("reservation:reservation_list"))
+        request.user = self.admin
+        view = ReservationListView()
+        view.request = request
+        self.assertTrue(view.test_func())
+
+    def test_test_func_with_self_team_permission(self):
+        request = self.factory.post(reverse("reservation:reservation_list"))
+        request.user = self.team_leader
+        request.POST = {"team": self.team.id}
+        view = ReservationListView()
+        view.request = request
+        self.assertTrue(view.test_func())
+
+    def test_test_func_without_permission(self):
+        request = self.factory.post(reverse("reservation:reservation_list"))
+        request.user = self.user
+        view = ReservationListView()
+        view.request = request
+        self.assertFalse(view.test_func())
+
+    def test_get_data(self):
+        view = ReservationListView()
+        data = view.get_data()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], self.room.id)
+        self.assertEqual(data[0]["title"], self.room.name)
+
+    def test_get_with_admin_permission(self):
+        request = self.factory.get(reverse("reservation:reservation_list"))
+        request.user = self.admin
+        view = ReservationListView()
+        view.request = request
+        response = view.get(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "form")
+
+    def test_get_with_team_leader_permission(self):
+        url = reverse("reservation:reservation_list")
+        self.client.login(username="teamleader", password="password")
+
+        request = self.factory.get(url)
+        request.user = self.team_leader
+        request.session = self.client.session
+
+        view = ReservationListView()
+        view.request = request
+        response = view.get(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "form")
+
+    def test_get_without_permission(self):
+        request = self.factory.get(reverse("reservation:reservation_list"))
+        request.user = AnonymousUser
+        view = ReservationListView.as_view()
+        view.request = request
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<form")
+
+    def test_post_valid_form(self):
+        data = {
+            "room": self.room.id,
+            "reserver_user": self.user.id,
+            "team": self.team.id,
+            "start_date": "2022-01-01 20:00:00",
+            "end_date": "2022-01-02 21:00:00",
+            "note": "Test reservation",
+        }
+        request = self.factory.post(reverse("reservation:reservation_list"), data)
+        request.user = self.team_leader
+        view = ReservationListView.as_view()
+        view.request = request
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "form")
+
+    def test_post_invalid_form(self):
+        request = self.factory.post(reverse("reservation:reservation_list"), {})
+        request.user = self.team_leader
+        view = ReservationListView()
+        view.request = request
+        response = view.post(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "form")
+
+
+class ReservationListJsonTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="user", password="password", email="a@a.com", phone="empty1")
+        self.reservation_date = self.today
+        self.reservation = Reservation.objects.create(
+            team_name="Test Team",
+            room_name="Test Room",
+            start_date="2024-3-10 9:00:00",
+            end_date="2024-3-10 10:00:00",
+            room_id=1,
+            note="Test Note",
+            reserver_user=self.user,
+        )
+
+    def test_get_method(self):
+        # Create a mock request object
+        request = self.client.get(reverse("reservation_list_json"), {"date": self.reservation_date})
+
+        # Call the view function with the mock request
+        response = ReservationListJson.as_view()(request)
+
+        # Check if the response is a JsonResponse
+        self.assertIsInstance(response, JsonResponse)
+
+        # Check the content of the JsonResponse
+        events = response.json()["events"]
+        self.assertEqual(len(events), 1)
+        event = events[0]
+        self.assertEqual(event["id"], self.reservation.id)
+        self.assertEqual(event["title"], self.reservation.team_name)
+        self.assertEqual(event["room"], self.reservation.room_name)
+        self.assertEqual(event["start"], self.reservation.start_date.isoformat())
+        self.assertEqual(event["end"], self.reservation.end_date.isoformat())
+        self.assertEqual(event["resourceId"], self.reservation.room_id)
+        self.assertEqual(event["extendedProps"]["note"], self.reservation.note)
+        self.assertEqual(event["extendedProps"]["reserver"], self.reservation.reserver_user.username)
+        self.assertEqual(event["backgroundColor"], "green")
+        self.assertEqual(event["borderColor"], "green")
