@@ -108,7 +108,7 @@ python manage.py runserver
 10. Access the application in your web browser at `http://127.0.0.1:8000`.
 
 11. When `DEBUG=True`, you can access Django's admin panel, navigate to `http://127.0.0.1:8000/admin` and log in with the superuser credentials created earlier.
-
+      - Necessary management pages apart from Django's admin panels are also implemented and only accessible by users with required permissions regardless of what `DEBUG` is.
 
 ## Sending Meetings Email Reminder and Cancellation Email
 
