@@ -2,7 +2,6 @@ import datetime
 from typing import Any
 from django.contrib.auth import get_user
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.http import JsonResponse
@@ -147,11 +146,10 @@ class ReservationListView(UserPassesTestMixin, View):
         data = self.get_data()
         team = None
 
-        if self.request.user is not AnonymousUser:
-            if self.request.user.has_perm("reservation:add_reservation"):
-                team = Team.objects.all()
-            elif self.request.user.has_perm("reservation:add_reservation_self_team"):
-                team = request.user.team
+        if self.request.user.has_perm("reservation:add_reservation"):
+            team = Team.objects.all()
+        elif self.request.user.has_perm("reservation:add_reservation_self_team"):
+            team = request.user.team
 
         if team:
             form = ReservationForm(
