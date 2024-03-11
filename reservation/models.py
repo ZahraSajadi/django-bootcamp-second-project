@@ -18,7 +18,7 @@ class Reservation(models.Model):
         ]
 
     def __str__(self):
-        return f"Reservation for {self.team.name} on {self.start_date.strftime('%Y-%m-%d')} at {self.start_date.strftime('%H:%M:%S')} by {self.reserver_user}"
+        return f"Reservation for {self.team.name} on {self.start_date.strftime('%Y-%m-%d')} from {self.start_date.strftime('%H:%M:%S')} to {self.end_date.strftime('%H:%M:%S')} by {self.reserver_user}"
 
 
 class Comment(models.Model):

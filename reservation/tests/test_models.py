@@ -13,12 +13,8 @@ class RoomModelTest(TestCase):
     def setUpTestData(cls):
         call_command("create_groups_and_permissions")
         # Set up non-modified objects used by all test methods
-        Room.objects.create(
-            name="Room 1", capacity=3, description="Test room 1", is_active=True
-        )
-        Room.objects.create(
-            name="Room 2", capacity=5, description="Test room 2", is_active=False
-        )
+        Room.objects.create(name="Room 1", capacity=3, description="Test room 1", is_active=True)
+        Room.objects.create(name="Room 2", capacity=5, description="Test room 2", is_active=False)
 
     def test_str_representation(self):
         room = Room.objects.get(name="Room 1")
@@ -44,9 +40,7 @@ class RoomModelTest(TestCase):
 
         # Test invalid rating value (less than 1)
         with self.assertRaises(ValidationError):
-            Room.objects.create(
-                name="Room 3", capacity=0, description="Test room 3"
-            ).full_clean()
+            Room.objects.create(name="Room 3", capacity=0, description="Test room 3").full_clean()
 
 
 class ReservationModelTest(TestCase):
@@ -54,9 +48,7 @@ class ReservationModelTest(TestCase):
     def setUp(self):
         call_command("create_groups_and_permissions")
         # Set up non-modified objects used by all test methods
-        self.room = Room.objects.create(
-            name="Test Room", capacity=5, description="Test room", is_active=True
-        )
+        self.room = Room.objects.create(name="Test Room", capacity=5, description="Test room", is_active=True)
         self.team = Team.objects.create(name="Test Team")
         self.user = get_user_model().objects.create_user(
             username="TestUser",
@@ -109,9 +101,7 @@ class ReservationModelTest(TestCase):
 
     def test_start_date_field(self):
         reservation = Reservation.objects.get(id=self.reservation.id)
-        self.assertEqual(
-            reservation.start_date.strftime("%Y-%m-%d %H:%M:%S"), "2024-01-01 10:00:00"
-        )
+        self.assertEqual(reservation.start_date.strftime("%Y-%m-%d %H:%M:%S"), "2024-01-01 10:00:00")
 
     def test_start_date_field_type(self):
         reservation = Reservation.objects.get(id=self.reservation.id)
@@ -119,9 +109,7 @@ class ReservationModelTest(TestCase):
 
     def test_end_date_field(self):
         reservation = Reservation.objects.get(id=self.reservation.id)
-        self.assertEqual(
-            reservation.end_date.strftime("%Y-%m-%d %H:%M:%S"), "2024-01-01 11:00:00"
-        )
+        self.assertEqual(reservation.end_date.strftime("%Y-%m-%d %H:%M:%S"), "2024-01-01 11:00:00")
 
     def test_end_date_field_type(self):
         reservation = Reservation.objects.get(id=self.reservation.id)
@@ -137,7 +125,7 @@ class ReservationModelTest(TestCase):
 
     def test_str_representation(self):
         reservation = Reservation.objects.get(id=self.reservation.id)
-        expected_str = "Reservation for Test Team on 2024-01-01 at 10:00:00 by John Doe"
+        expected_str = "Reservation for Test Team on 2024-01-01 from 10:00:00 to 11:00:00 by John Doe"
         self.assertEqual(str(reservation), expected_str)
 
 
@@ -152,12 +140,8 @@ class CommentModelTestCase(TestCase):
             phone="123456789",
             team=None,
         )
-        self.room = Room.objects.create(
-            name="Test Room", capacity=5, description="Test room", is_active=True
-        )
-        self.comment = Comment.objects.create(
-            content="Test comment", user=self.user, room=self.room
-        )
+        self.room = Room.objects.create(name="Test Room", capacity=5, description="Test room", is_active=True)
+        self.comment = Comment.objects.create(content="Test comment", user=self.user, room=self.room)
 
     def test_content_field(self):
         comment = Comment.objects.get(id=self.comment.id)
@@ -187,9 +171,7 @@ class RatingModelTestCase(TestCase):
             phone="123456789",
             team=None,
         )
-        self.room = Room.objects.create(
-            name="Test Room", capacity=5, description="Test room", is_active=True
-        )
+        self.room = Room.objects.create(name="Test Room", capacity=5, description="Test room", is_active=True)
 
     def test_rating_model(self):
         rating = Rating.objects.create(value=5, user=self.user, room=self.room)

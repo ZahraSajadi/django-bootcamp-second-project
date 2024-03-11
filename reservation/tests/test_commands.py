@@ -14,6 +14,7 @@ class YourCommandTestCase(TestCase):
     def setUp(self) -> None:
         call_command("create_groups_and_permissions")
         self.room = Room.objects.create(name="Room1", capacity=10)
+        self.room_deactive = Room.objects.create(name="Room1", capacity=10, is_active=False)
         self.team = Team.objects.create(name="Team")
         self.user1 = User.objects.create_user(
             username="user1", password="password", email="asfasf@asd.com", team=self.team
@@ -33,6 +34,13 @@ class YourCommandTestCase(TestCase):
             start_date=timezone.now() + timezone.timedelta(hours=3),
             end_date=timezone.now() + timezone.timedelta(hours=4),
         )
+        self.reservation3 = Reservation.objects.create(
+            room=self.room_deactive,
+            reserver_user=self.user1,
+            team=self.team,
+            start_date=timezone.now() + timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=3),
+        )
 
     def test_command_execution(self):
         out = StringIO()
@@ -41,3 +49,4 @@ class YourCommandTestCase(TestCase):
         output = out.getvalue().strip()
         sys.stdout = sys.__stdout__
         self.assertIn("1 reminder email sent.", output)
+        self.assertIn("1 cancellation email sent.", output)
