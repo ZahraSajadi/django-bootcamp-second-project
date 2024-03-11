@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
-from django.http import JsonResponse
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.timezone import timedelta
@@ -21,7 +20,6 @@ from reservation.views import (
     RoomUpdateView,
     UserReservationListView,
     ReservationListView,
-    ReservationListJson,
 )
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 
@@ -362,42 +360,52 @@ class ReservationListViewTestCase(TestCase):
 
 class ReservationListJsonTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user", password="password", email="a@a.com", phone="empty1")
-        self.reservation_date = self.today
+        call_command("create_groups_and_permissions")
+        self.team1 = Team.objects.create(name="Test Team1")
+        self.team2 = Team.objects.create(name="Test Team2")
+        self.room = Room.objects.create(name="Test Room", capacity=10, is_active=True)
+        self.user = User.objects.create_user(username="testuser", password="password", email="a@a.com", phone="empty1")
         self.reservation = Reservation.objects.create(
-            team_name="Test Team",
-            room_name="Test Room",
+            team=self.team1,
+            room=self.room,
             start_date="2024-3-10 9:00:00",
             end_date="2024-3-10 10:00:00",
-            room_id=1,
-            note="Test Note",
+            note="Test Note1",
+            reserver_user=self.user,
+        )
+        self.reservation = Reservation.objects.create(
+            team=self.team1,
+            room=self.room,
+            start_date="2024-3-11 14:30:00",
+            end_date="2024-3-11 16:00:00",
+            note="Test Note2",
             reserver_user=self.user,
         )
 
     def test_get_method(self):
         # Create a mock request object
-        request = self.client.get(reverse("reservation_list_json"), {"date": self.reservation_date})
+        response = self.client.get(reverse("reservation:reservation_json"), {"date": "2024-3-10"})
+        self.assertEqual(response.status_code, 200)
 
-        # Call the view function with the mock request
-        response = ReservationListJson.as_view()(request)
-
-        # Check if the response is a JsonResponse
-        self.assertIsInstance(response, JsonResponse)
-
-        # Check the content of the JsonResponse
-        events = response.json()["events"]
-        self.assertEqual(len(events), 1)
-        event = events[0]
-        self.assertEqual(event["id"], self.reservation.id)
-        self.assertEqual(event["title"], self.reservation.team_name)
-        self.assertEqual(event["room"], self.reservation.room_name)
-        self.assertEqual(event["start"], self.reservation.start_date.isoformat())
-        self.assertEqual(event["end"], self.reservation.end_date.isoformat())
-        self.assertEqual(event["resourceId"], self.reservation.room_id)
-        self.assertEqual(event["extendedProps"]["note"], self.reservation.note)
-        self.assertEqual(event["extendedProps"]["reserver"], self.reservation.reserver_user.username)
-        self.assertEqual(event["backgroundColor"], "green")
-        self.assertEqual(event["borderColor"], "green")
+        expected_data = {
+            "events": [
+                {
+                    "id": 1,
+                    "title": "Test Team1",
+                    "room": "Test Room",
+                    # "start": datetime.strptime('2024-3-10 9:00:00', "%Y-%m-%d %H:%M:%S").isoformat(),
+                    "start": "2024-03-10T09:00:00+00:00",
+                    "end": "2024-03-10T10:00:00+00:00",
+                    # "end": datetime.strptime('2024-3-10 10:00:00', "%Y-%m-%d %H:%M:%S").isoformat(),
+                    "resourceId": 1,
+                    "extendedProps": {"note": "Test Note1", "reserver": "testuser"},
+                    "backgroundColor": "green",
+                    "borderColor": "green",
+                },
+            ]
+        }
+        print(response.json())
+        self.assertEqual(response.json(), expected_data)
 
 
 class RoomManagementViewsTestCase(TestCase):
