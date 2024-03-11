@@ -1,11 +1,15 @@
 from django.contrib.auth.models import AnonymousUser, Group
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
+from django.http import HttpResponseRedirect
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from users.models import Team
+from users.models import OTP, Team
 from users.views import (
+    EnterOTPView,
+    RequestOTPView,
     TeamCreateView,
     TeamDeleteView,
     TeamListView,
@@ -490,3 +494,60 @@ class SignupViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(email="test1@test.com").exists())
         self.assertContains(response, "User with this Phone already exists.")
+
+
+class LoginViewTestCase(TestCase):
+    def setUp(self) -> None:
+        call_command("create_groups_and_permissions")
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            username="user",
+            password="password",
+            email="email@email.com",
+            phone="09123456789",
+        )
+        self.middleware = SessionMiddleware(lambda x: None)
+
+    def test_login_with_otp_email(self):
+        data = {"email": self.user.email, "phone": ""}
+        request = self.factory.post(reverse("users:login"), data)
+        request.user = AnonymousUser()
+        response = RequestOTPView.as_view()(request)
+        self.assertEqual(response.__class__, HttpResponseRedirect)
+        otp = OTP.objects.filter(user=self.user).order_by("-created_at").first()
+        data["code"] = otp.otp
+        request = self.factory.post(reverse("users:otp"), data)
+        self.middleware.process_request(request)
+        request.session.save()
+        request.user = AnonymousUser()
+        response = EnterOTPView.as_view()(request)
+        self.assertEqual(response.__class__, HttpResponseRedirect)
+
+    def test_login_with_otp_phone(self):
+        data = {"email": "", "phone": self.user.phone}
+        request = self.factory.post(reverse("users:login"), data)
+        request.user = AnonymousUser()
+        response = RequestOTPView.as_view()(request)
+        self.assertEqual(response.__class__, HttpResponseRedirect)
+        otp = OTP.objects.filter(user=self.user).order_by("-created_at").first()
+        data["code"] = otp.otp
+        request = self.factory.post(reverse("users:otp"), data)
+        self.middleware.process_request(request)
+        request.session.save()
+        request.user = AnonymousUser()
+        response = EnterOTPView.as_view()(request)
+        self.assertEqual(response.__class__, HttpResponseRedirect)
+
+    def test_login_with_otp_email_wrong_code(self):
+        data = {"email": self.user.email, "phone": ""}
+        request = self.factory.post(reverse("users:login"), data)
+        request.user = AnonymousUser()
+        response = RequestOTPView.as_view()(request)
+        self.assertEqual(response.__class__, HttpResponseRedirect)
+        data["code"] = "123456"
+        request = self.factory.post(reverse("users:otp"), data)
+        self.middleware.process_request(request)
+        request.session.save()
+        request.user = AnonymousUser()
+        response = EnterOTPView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
