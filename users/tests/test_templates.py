@@ -1,3 +1,5 @@
+from io import StringIO
+import sys
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
@@ -359,6 +361,14 @@ class LoginTemplateTestCase(TestCase):
             email="email@email.com",
             phone="09123456789",
         )
+        self.stdout_orig = sys.stdout
+        self.stderr_orig = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+
+    def tearDown(self):
+        sys.stdout = self.stdout_orig
+        sys.stderr = self.stderr_orig
 
     def test_login_page(self):
         response = self.client.get(reverse("users:login"))

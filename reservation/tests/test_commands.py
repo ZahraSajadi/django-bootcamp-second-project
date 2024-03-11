@@ -47,6 +47,11 @@ class YourCommandTestCase(TestCase):
         sys.stdout = out
         call_command("reservation_email_reminder")
         output = out.getvalue().strip()
-        sys.stdout = sys.__stdout__
         self.assertIn("1 reminder email sent.", output)
         self.assertIn("1 cancellation email sent.", output)
+        self.reservation3.delete()
+        call_command("reservation_email_reminder")
+        output = out.getvalue().strip()
+        sys.stdout = sys.__stdout__
+        self.assertIn("1 reminder email sent.", output)
+        self.assertIn("0 cancellation email sent.", output)
