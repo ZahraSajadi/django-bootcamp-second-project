@@ -1,11 +1,19 @@
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import AnonymousUser, Group
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from users.models import Team
-from users.views import TeamCreateView, TeamDeleteView, TeamListView, TeamUpdateView, UserListView, UserUpdateView
+from users.views import (
+    TeamCreateView,
+    TeamDeleteView,
+    TeamListView,
+    TeamUpdateView,
+    UserCreate,
+    UserListView,
+    UserUpdateView,
+)
 from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 
 User = get_user_model()
@@ -320,3 +328,171 @@ class UserManagementViewTestCase(TestCase):
         request.session = self.client.session
         response = UserUpdateView.as_view()(request, pk=self.user.id)
         self.assertEqual(response.status_code, 403)
+
+
+class SignupViewTestCase(TestCase):
+    def setUp(self) -> None:
+        call_command("create_groups_and_permissions")
+        self.factory = RequestFactory()
+
+    def test_sign_up_get(self):
+        request = self.factory.get(reverse("users:sign_up"))
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Username:")
+        self.assertContains(response, "Phone:")
+        self.assertContains(response, "Email address:")
+        self.assertContains(response, "Password:")
+        self.assertContains(response, "Password confirmation:")
+        self.assertTemplateUsed("users/signup.html")
+
+    def test_sign_up_post_correct_format(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username="admin").exists())
+
+    def test_sign_up_post_wrong_password_confirmation(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "09123456789",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,z;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="admin").exists())
+
+    def test_sign_up_post_wrong_phone_format(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "0912345679",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="admin").exists())
+        self.assertContains(response, "The phone number is wrong. The phone number must be 11 digits and start with 09")
+
+    def test_sign_up_post_wrong_email_format(self):
+        data = {
+            "username": "admin",
+            "email": "test@test",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="admin").exists())
+        self.assertContains(response, "Enter a valid email address.")
+
+    def test_sign_up_post_wrong_username_format(self):
+        data = {
+            "username": "admin%",
+            "email": "test@test.com",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="admin%").exists())
+        self.assertContains(
+            response, "Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters."
+        )
+
+    def test_sign_up_post_taken_username(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        data = {
+            "username": "admin",
+            "email": "test1@test.com",
+            "phone": "09121212121",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="test1@test.com").exists())
+        self.assertContains(response, "A user with that username already exists.")
+
+    def test_sign_up_post_taken_email(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        data = {
+            "username": "admin1",
+            "email": "test@test.com",
+            "phone": "09121212121",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="admin1").exists())
+        self.assertContains(response, "User with this Email address already exists.")
+
+    def test_sign_up_post_taken_phone(self):
+        data = {
+            "username": "admin",
+            "email": "test@test.com",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        data = {
+            "username": "admin1",
+            "email": "test1@test.com",
+            "phone": "09123456729",
+            "password1": "{9,x,zR;",
+            "password2": "{9,x,zR;",
+        }
+        request = self.factory.post(reverse("users:sign_up"), data)
+        request.user = AnonymousUser()
+        response = UserCreate.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="test1@test.com").exists())
+        self.assertContains(response, "User with this Phone already exists.")
