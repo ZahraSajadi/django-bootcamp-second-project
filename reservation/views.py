@@ -146,9 +146,9 @@ class ReservationListView(UserPassesTestMixin, View):
         data = self.get_data()
         team = None
 
-        if self.request.user.has_perm("reservation:add_reservation"):
+        if self.request.user.has_perm("reservation.add_reservation"):
             team = Team.objects.all()
-        elif self.request.user.has_perm("reservation:add_reservation_self_team"):
+        elif self.request.user.has_perm("reservation.add_reservation_self_team"):
             team = request.user.team
 
         if team:
@@ -163,9 +163,7 @@ class ReservationListView(UserPassesTestMixin, View):
     def post(self, request, *args, **kwargs):
         form = ReservationForm(request.POST, user=request.user)
         if form.is_valid():
-            room = form.cleaned_data.get("room")
-            if room.is_active:
-                form.save()
+            form.save()
         data = self.get_data()
         context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)

@@ -110,6 +110,12 @@ class ReservationForm(forms.ModelForm):
     def clean_reserver_user(self):
         return self.user
 
+    def clean_room(self):
+        room = self.cleaned_data.get("room")
+        if room.is_active:
+            return room
+        return None
+
     def clean_team(self):
         team = self.cleaned_data.get("team")
         if self.user.has_perm("reservation.add_reservation"):
