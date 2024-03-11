@@ -264,19 +264,19 @@ class ReservationListViewTestCase(TestCase):
 
     def test_test_func_with_get_request(self):
         request = self.factory.get(reverse("reservation:reservation_list"))
-        request.user = AnonymousUser
+        request.user = AnonymousUser()
         view = ReservationListView()
         view.request = request
         self.assertTrue(view.test_func())
 
-    def test_test_func_with_permission(self):
+    def test_test_func_post_request_with_admin_permission(self):
         request = self.factory.post(reverse("reservation:reservation_list"))
         request.user = self.admin
         view = ReservationListView()
         view.request = request
         self.assertTrue(view.test_func())
 
-    def test_test_func_with_self_team_permission(self):
+    def test_test_func_post_request_with_self_team_permission(self):
         request = self.factory.post(reverse("reservation:reservation_list"))
         request.user = self.team_leader
         request.POST = {"team": self.team.id}
@@ -284,7 +284,7 @@ class ReservationListViewTestCase(TestCase):
         view.request = request
         self.assertTrue(view.test_func())
 
-    def test_test_func_without_permission(self):
+    def test_test_func_post_request_without_permission(self):
         request = self.factory.post(reverse("reservation:reservation_list"))
         request.user = self.user
         view = ReservationListView()
@@ -305,7 +305,7 @@ class ReservationListViewTestCase(TestCase):
         view.request = request
         response = view.get(request)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "form")
+        self.assertContains(response, "team:")
 
     def test_get_with_team_leader_permission(self):
         url = reverse("reservation:reservation_list")
@@ -320,11 +320,11 @@ class ReservationListViewTestCase(TestCase):
         response = view.get(request)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "form")
+        self.assertContains(response, "<form")
 
     def test_get_without_permission(self):
         request = self.factory.get(reverse("reservation:reservation_list"))
-        request.user = AnonymousUser
+        request.user = AnonymousUser()
         view = ReservationListView.as_view()
         view.request = request
         response = view(request)
@@ -373,7 +373,7 @@ class ReservationListJsonTest(TestCase):
             note="Test Note1",
             reserver_user=self.user,
         )
-        self.reservation = Reservation.objects.create(
+        Reservation.objects.create(
             team=self.team1,
             room=self.room,
             start_date="2024-3-11 14:30:00",
@@ -390,21 +390,20 @@ class ReservationListJsonTest(TestCase):
         expected_data = {
             "events": [
                 {
-                    "id": 1,
+                    "id": self.reservation.id,
                     "title": "Test Team1",
                     "room": "Test Room",
                     # "start": datetime.strptime('2024-3-10 9:00:00', "%Y-%m-%d %H:%M:%S").isoformat(),
                     "start": "2024-03-10T09:00:00+00:00",
                     "end": "2024-03-10T10:00:00+00:00",
                     # "end": datetime.strptime('2024-3-10 10:00:00', "%Y-%m-%d %H:%M:%S").isoformat(),
-                    "resourceId": 1,
+                    "resourceId": self.room.id,
                     "extendedProps": {"note": "Test Note1", "reserver": "testuser"},
                     "backgroundColor": "green",
                     "borderColor": "green",
                 },
             ]
         }
-        print(response.json())
         self.assertEqual(response.json(), expected_data)
 
 
