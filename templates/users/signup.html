@@ -1,0 +1,21 @@
+{% extends '_base.html' %}
+
+{% block body %}
+    <div class="container p-4">
+        <div class="row">
+            <div class="col-12">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">
+                        Submit
+                    </button>
+                    <small style="margin-left:10px;">Have an account?</small>
+                    <button type="button", onclick="location.href='{% url "users:login_with_username" %}'" class="btn btn-link btn-sm">
+                        Login Instead
+                      </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

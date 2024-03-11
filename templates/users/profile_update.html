@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+
+{% block body %}
+<div class="container p-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Update Profile</h1>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <p>Role:
+                    {% if object.is_superuser %}
+                        Super user
+                    {% elif object.is_staff %}
+                        Admin
+                    {% else %}
+                        User
+                    {% endif %}
+                </p>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock body %}

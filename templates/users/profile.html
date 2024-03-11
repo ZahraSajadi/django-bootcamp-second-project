@@ -1,0 +1,30 @@
+{% extends "_base.html" %}
+{% block body %}
+<div class="container p-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>User Profile</h1>
+            {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="User Image" class="img-fluid">
+            {% endif %}
+            <p>Username: {{ user.username }}</p>
+            <p>First name: {{ user.first_name }}</p>
+            <p>Last name: {{ user.last_name }}</p>
+            <p>Email: {{ user.email }}</p>
+            <p>Phone: {{ user.phone }}</p>
+            <p>Team: {{ user.team.name }}</p>
+            <p>Role:
+                {% if user.is_superuser %}
+                Super user
+                {% elif  user.is_staff%}
+                Admin
+                {% else %}
+                User
+                {% endif %}
+            </p>
+            <a href="{% url 'users:profile_update' %}" class="btn btn-primary">Update Profile</a>
+            <a href="{% url 'users:change_password' %}" class="btn btn-secondary">Change Password</a>
+        </div>
+    </div>
+</div>
+{% endblock body %}

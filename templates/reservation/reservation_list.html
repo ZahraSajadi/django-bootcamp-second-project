@@ -1,0 +1,304 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block head %}
+  <!-- FullCalendar CSS -->
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' />
+  <!-- FullCalendar Scheduler CSS -->
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar-scheduler/1.10.0/scheduler.min.css' />
+  <!-- Moment.js -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+  <!-- jQuery -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+  <!-- FullCalendar JavaScript -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
+  <!-- FullCalendar Scheduler JavaScript -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar-scheduler/1.10.0/scheduler.min.js'></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- jQuery UI library -->
+  <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+  <!-- jQuery UI CSS -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+{% endblock head %}
+
+{% block body %}
+  <div id="calendar-container">
+    <div id="dialog"></div>
+    <div id='calendar'></div>
+    {% if perms.reservation.add_reservation or perms.reservation.add_reservation_self_team %}
+      <div class="card my-3">
+        <div class="card-body">
+          <h5 class="card-title">Reservation</h5>
+          <form action="{% url 'reservation:reservation_list' %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">start time: </label>
+              {{ form.start_date }}
+            </div>
+            <div class="mb-3">
+              <label class="control-label">end time: </label>
+              {{ form.end_date }}
+            </div>
+            <div class="mb-3">
+              <label class="control-label">room: </label>
+                {{ form.room }}
+            </div>
+            <div class="mb-3">
+            {% if perms.reservation.add_reservation %}
+              <label class="control-label">team: </label>
+            {% endif %}
+                {{ form.team }}
+            </div>
+            <div class="mb-3">
+              <label class="control-label">note: </label>
+              {{ form.note }}
+              {{ form.reserver_user }}
+            </div>
+
+            {% if form.errors %}
+              <ul class="errorlist">
+                {{form.non_field_errors}}
+                {% for field in form %}
+                  {% if field.errors %}
+                    <li>{{ field.label_tag }}
+                      <ul class="errorlist">
+                        {% for error in field.errors %}
+                          <li>{{ error }}</li>
+                        {% endfor %}
+                      </ul>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            {% endif %}
+            <button type="submit" class="btn btn-primary"> Reserve </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous">
+  </script>
+  <script type="text/javascript">
+    var delete_perm = {{ perms.reservation.delete_reservation|lower }};
+    $(document).ready(function() {
+    const roomInput = document.getElementById('reserve-room');
+      $('#calendar').fullCalendar({
+        timezone: 'UTC+3:30',
+        allDaySlot: false,
+        defaultView: 'agendaDay',
+        minTime: '07:00:00',
+        maxTime: '22:00:00',
+        selectable: true,
+        slotDuration: '00:30:00',
+        eventOverlap: false,
+        resourceAreaHeaderContent: 'Rooms',
+        aspectRatio: 1.5,
+        resources: {{ resources|safe }},
+
+        resourceRender: function(resource, labelTds, bodyTds) {
+          // Create a link element
+          var link = document.createElement('a');
+          link.href = "{% url 'reservation:room_detail' pk=12345 %}".replace(/12345/, resource.id);;
+          while (labelTds[0].firstChild) {
+            link.appendChild(labelTds[0].firstChild);
+          }
+          // Append the link to the resource cell
+          labelTds[0].appendChild(link);
+        },
+
+        events: function(start, end, timezone, callback) {
+          var startDate = start.format('YYYY-MM-DD');
+          // Fetch events from the database based on the start and end dates
+          $.ajax({
+            url: '/reservation/json/',
+            type: 'GET',
+            dataType: 'json',
+            data: {
+              date: startDate,
+            },
+            success: function(response) {
+              var events = response.events;
+              console.log(events)
+              callback(events);
+            },
+            error: function(xhr, status, error) {
+              console.log('Error:', error);
+            }
+          });
+        },
+
+        eventClick: function(event) {
+          openDialog(event);
+        },
+
+        dayClick: function(date, jsEvent, view) {
+          // Handle event click here
+          console.log('dayClick:', date);
+        },
+
+        select: function(start, end, jsEvent, view, info) {
+          // Handle multi-select here
+          if (view.name === 'agendaDay') {
+            // User selected a range of time slots in the agendaDay view
+            roomInput.value = info.id;
+
+            const desiredTime = new Date();
+
+            desiredTime.setYear(start['_i'][0]);
+            desiredTime.setMonth(start['_i'][1]);
+            desiredTime.setDate(start['_i'][2]);
+            desiredTime.setHours(start['_i'][3]);
+            desiredTime.setMinutes(start['_i'][4]);
+            startTimePicker.setDate(desiredTime);
+
+            desiredTime.setHours(end['_i'][3]);
+            desiredTime.setMinutes(end['_i'][4]);
+            endTimePicker.setDate(desiredTime);
+          }
+        },
+        validRange: function(nowDate) {
+          var nowDate = nowDate.clone().startOf('day');
+          console.log(nowDate);
+          return {
+            start: nowDate.clone().startOf('day'),
+            end: nowDate.clone().startOf('day').add(7, 'days')
+          };
+        },
+
+        selectAllow: function(selectInfo) {
+            // Check if any events intersect with the selected range
+            var events = $('#calendar').fullCalendar('clientEvents');
+            var selectedEvent = {
+              start: selectInfo.start,
+              end: selectInfo.end,
+              id: selectInfo.resourceId
+            };
+            var now = moment();
+            if (selectedEvent.end.isBefore(now)) {
+              return false;
+            }
+            for (var i = 0; i < events.length; i++) {
+              var event = events[i];
+              if (event.resourceId === selectedEvent.id && event.start.isBefore(selectedEvent.end) && event.end.isAfter(selectedEvent.start)) {
+                return false;
+              }
+            }
+            return true;
+        },
+      });
+      // Fetch events when the next button is clicked
+        $('.fc-next-button').on('click', function() {
+<!--          var calendar = $('#calendar').fullCalendar('getCalendar');-->
+          calendar.fullCalendar('next');
+          calendar.fullCalendar('refetchEvents');
+        });
+
+        // Fetch events when the previous button is clicked
+        $('.fc-prev-button').on('click', function() {
+          calendar.fullCalendar('prev');
+          calendar.fullCalendar('refetchEvents');
+        });
+
+    });
+
+    // Initialize the first Flatpickr instance for the start time
+    const startTimePicker = flatpickr("#start-time", {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "Y-m-d H:i",
+      minTime: "07:00",
+      maxTime: "21:50",
+      onChange: function(selectedDates, dateStr) {
+        const selectedStartTime = selectedDates[0];
+        endTimePicker.set("minTime", selectedStartTime);
+        endTimePicker.clear();
+      }
+    });
+
+    // Initialize the second Flatpickr instance for the end time
+    const endTimePicker = flatpickr("#end-time", {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "Y-m-d H:i",
+      minTime: "07:10",
+      maxTime: "22:00",
+    });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function openDialog(event) {
+      var dialog = document.getElementById('dialog');
+      var reservationId = event.id;
+      var buttons = [{
+          text: 'Cancel',
+          class: 'btn btn-primary',
+          click: function () {
+              $(dialog).dialog('close');
+          }
+      }];
+      if (delete_perm) {
+          buttons.unshift({
+              text: 'Delete',
+              class: 'btn btn-danger delete-button',
+              click: function () {
+                  var url = '/reservation/' + reservationId + '/delete';
+                  window.location.href = url;
+                  // Add AJAX request if needed
+                  $(dialog).dialog('close');
+              }
+          });
+      }
+      dialog.innerHTML = '<div class="custom-dialog">' +
+          '<div class="modal-dialog modal-dialog-centered">' +
+          '<div class="modal-content">' +
+          '<div class="modal-header">' +
+          '<h5 class="modal-title">Reservation for ' + event.title + '</h5>' +
+          '</div>' +
+          '<div class="modal-body">' +
+          '<p>Room: ' + event.room + '</p>' +
+          '<p>Team: ' + event.title + '</p>' +
+          '<p>Reserver: ' + event.extendedProps.reserver + '</p>' +
+          '<p>Note: ' + event.extendedProps.note + '</p>' +
+          '<p>Start Time: ' + event.start.format('YYYY-MM-DD HH:mm') + '</p>' +
+          '<p>End Time: ' + event.end.format('YYYY-MM-DD HH:mm') + '</p>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '</div>';
+
+      $(dialog).dialog({
+          modal: false,
+          title: 'Reservation for ' + event.title,
+          width: 400,
+          height: 300,
+          buttons: buttons
+      });
+
+  }
+
+  </script>
+
+  {% endblock body %}
