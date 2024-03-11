@@ -28,7 +28,7 @@ The program provides the following functionalities:
 
 2. **Reservation Management**: Users can view their existing reservations, and team leaders can cancel them if necessary.
 
-3. **Admin Panel**: Administrators can manage rooms, teams, cancell reservations, and handle user management tasks.
+3. **Admin Panel**: Administrators can manage rooms, teams, cancel reservations, and handle user management tasks.
 
 ## Requirements
 
@@ -63,7 +63,7 @@ source django-env/bin/activate
 
 3. Navigate to the project directory:
 ```shell
-cd meeting-room-reservation-system
+cd django-bootcamp-second-project.git
 ```
 
 4. Install the required dependencies using pip:
