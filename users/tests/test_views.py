@@ -1,3 +1,5 @@
+from io import StringIO
+import sys
 from django.contrib.auth.models import AnonymousUser, Group
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import PermissionDenied
@@ -507,6 +509,14 @@ class LoginViewTestCase(TestCase):
             phone="09123456789",
         )
         self.middleware = SessionMiddleware(lambda x: None)
+        self.stdout_orig = sys.stdout
+        self.stderr_orig = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+
+    def tearDown(self):
+        sys.stdout = self.stdout_orig
+        sys.stderr = self.stderr_orig
 
     def test_login_with_otp_email(self):
         data = {"email": self.user.email, "phone": ""}

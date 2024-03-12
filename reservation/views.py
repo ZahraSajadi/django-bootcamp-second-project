@@ -98,7 +98,7 @@ class RoomDeleteView(PermissionRequiredMixin, DeleteView):
     template_name = "shared/confirm_delete.html"
 
 
-class ReservationListJson(LoginRequiredMixin, View):
+class ReservationListJson(View):
     def get(self, request, *args, **kwargs):
         today = datetime.datetime.now().date()
         date = request.GET.get("date")
@@ -137,30 +137,34 @@ class ReservationListView(UserPassesTestMixin, View):
             return False
         return True
 
-    def get_data(self, request):
+    def get_data(self):
         resources = Room.objects.filter(is_active=True)
         resources = [{"id": room.id, "title": room.name} for room in resources]
         return resources
 
     def get(self, request, *args, **kwargs):
-        if self.request.user.has_perm("reservation:add_reservation"):
+        data = self.get_data()
+        team = None
+
+        if self.request.user.has_perm("reservation.add_reservation"):
             team = Team.objects.all()
-        else:
+        elif self.request.user.has_perm("reservation.add_reservation_self_team"):
             team = request.user.team
-        form = ReservationForm(
-            initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
-        )
-        data = self.get_data(request)
-        context = {"resources": data, "form": form, "user": request.user}
+
+        if team:
+            form = ReservationForm(
+                initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
+            )
+            context = {"resources": data, "form": form, "user": request.user}
+        else:
+            context = {"resources": data, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
     def post(self, request, *args, **kwargs):
         form = ReservationForm(request.POST, user=request.user)
         if form.is_valid():
-            room = form.cleaned_data.get("room")
-            if room.is_active:
-                form.save()
-        data = self.get_data(request)
+            form.save()
+        data = self.get_data()
         context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 

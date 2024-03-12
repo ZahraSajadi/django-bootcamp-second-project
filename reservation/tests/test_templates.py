@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+from django.utils import timezone
 from warnings import filterwarnings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+
 from reservation.models import Rating, Reservation, Room, Comment
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from users.models import Team
@@ -307,3 +309,59 @@ class RoomManagementTemplateTestCase(TestCase):
         response = self.client.post(reverse("reservation:room_delete", kwargs={"pk": self.room.id}))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Room.objects.filter(name=self.room.name).exists())
+
+
+class ReservationListTemplateTestCase(TestCase):
+    def setUp(self):
+        call_command("create_groups_and_permissions")
+        self.team = Team.objects.create(name="Test Team")
+        self.room = Room.objects.create(name="Test Room", capacity=10)
+        self.user = User.objects.create_user(username="user", password="password", team=self.team)
+        self.leader = User.objects.create_user(
+            username="leader",
+            password="password",
+            team=self.team,
+            email="empty1",
+            phone="empty1",
+        )
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="password",
+            email="empty2",
+            phone="empty2",
+        )
+        self.admin.is_staff = True
+        self.admin.save()
+        self.team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
+        self.team_leaders_group.user_set.add(self.leader)
+
+        self.data = {
+            "room": self.room.id,
+            "reserver_user": self.leader.id,
+            "team": self.team.id,
+            "start_date": datetime.combine(timezone.now().date() + timedelta(days=1), time(hour=9, minute=30)),
+            "end_date": datetime.combine(timezone.now().date() + timedelta(days=1), time(hour=12, minute=30)),
+            "note": "Test reservation",
+        }
+
+    def test_reservation_list_template(self):
+        response = self.client.get(reverse("reservation:reservation_list"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_reserve_room_normal_user(self):
+        self.client.login(username=self.user.username, password="password")
+        response = self.client.post(reverse("reservation:reservation_list"), self.data)
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Reservation.objects.filter(room=self.room.id).exists())
+
+    def test_reserve_room_y_team_leader(self):
+        self.client.login(username=self.leader.username, password="password")
+        response = self.client.post(reverse("reservation:reservation_list"), self.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Reservation.objects.filter(room=self.room).exists())
+
+    def test_reserve_room_by_admin(self):
+        self.client.login(username=self.admin.username, password="password")
+        response = self.client.post(reverse("reservation:reservation_list"), self.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Reservation.objects.filter(room=self.room).exists())

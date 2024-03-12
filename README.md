@@ -20,6 +20,9 @@ The database structure for this system consists of the following tables:
 
 7. **OTP**: This table stores One-Time Passwords generated for users. It includes user ID (foreign key refrencing CustomUser table), OTP code and created_at time.
 
+### ERD Diagram
+![ERD Diagram](https://github.com/ZahraSajadi/django-bootcamp-second-project/blob/develop/erd.png?raw=true)
+
 ## How the Program Works
 
 The program provides the following functionalities:
