@@ -6,29 +6,10 @@ from .models import OTP, Team
 from second_project.settings import TEAM_LEADERS_GROUP_NAME
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
 from utils.db.model_helper import phone_regex, verify_otp
+from shared.forms import BootstrapModelForm
+from shared.fields import UserMultipleChoiceField
 
 User = get_user_model()
-
-
-class UserMultipleChoiceField(forms.ModelMultipleChoiceField):
-    def label_from_instance(self, obj):
-        text = f"{obj}"
-        if obj.team:
-            text = f"{text} - {obj.team}"
-        return text
-
-
-class BootstrapModelForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            if field.widget.__class__ not in [
-                UserMultipleChoiceField,
-                forms.MultipleChoiceField,
-                forms.CheckboxSelectMultiple,
-                forms.CheckboxInput,
-            ]:
-                field.widget.attrs.update({"class": "form-control", "style": "width: 300px;"})
 
 
 class TeamCreateUpdateForm(BootstrapModelForm):

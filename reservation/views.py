@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from users.models import Team
 from .models import Comment, Reservation, Room, Rating
-from .forms import SubmitCommentForm, SubmitRatingForm, ReservationForm
+from .forms import RoomCreateForm, SubmitCommentForm, SubmitRatingForm, ReservationForm
 
 
 class RoomDetailView(DetailView):
@@ -72,15 +72,30 @@ class UserReservationListView(LoginRequiredMixin, ListView):
 class RoomListView(PermissionRequiredMixin, ListView):
     permission_required = "reservation.view_room"
     model = Room
+    ordering = "id"
 
 
-class RoomCreateView(PermissionRequiredMixin, CreateView): ...
+class RoomCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "reservaion.change_room"
+    model = Room
+    template_name = "reservation/room_create.html"
+    form_class = RoomCreateForm
+    success_url = reverse_lazy("reservation:room_list")
 
 
-class RoomUpdateView(PermissionRequiredMixin, UpdateView): ...
+class RoomUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = "reservaion.change_room"
+    model = Room
+    template_name = "reservation/room_update.html"
+    form_class = RoomCreateForm
+    success_url = reverse_lazy("reservation:room_list")
 
 
-class RoomDeleteView(PermissionRequiredMixin, DeleteView): ...
+class RoomDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = "reservaion.delete_room"
+    model = Room
+    success_url = reverse_lazy("reservation:room_list")
+    template_name = "shared/confirm_delete.html"
 
 
 class ReservationListJson(LoginRequiredMixin, View):

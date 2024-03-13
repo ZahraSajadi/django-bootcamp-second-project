@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # local
     "users",
     "reservation",
+    "django_crontab",
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,13 @@ LOGIN_URL = "users:login_with_username"
 LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "users:login_with_username"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+REMINDER_EMAIL_LOG_FILE = os.path.join(BASE_DIR, "reminder_email.log")
+CRONJOBS = [
+    (
+        "*/59 * * * *",
+        "django.core.management.call_command",
+        ["reservation_email_reminder"],
+        {},
+        f">> {REMINDER_EMAIL_LOG_FILE} 2>&1",
+    )
+]

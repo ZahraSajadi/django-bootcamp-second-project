@@ -1,16 +1,2 @@
-{% extends "_base.html" %}
-{% block body %}
-<div class="container p-4">
-    <div class="row">
-        <div class="col-12">
-            <h1>Delete Reservation</h1>
-            <p>Are you sure you want to delete "{{ object }}"?</p>
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Confirm Delete</button>
-            </form>
-            <button style="margin-top:10px;" onclick="window.history.back()" class="btn btn-secondary">Back</button>
-        </div>
-    </div>
-</div>
-{% endblock body %}
+{% extends "shared/confirm_delete.html" %}
+{% block body_title %}Delete Reservation{% endblock body_title %}
