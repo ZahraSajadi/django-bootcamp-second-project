@@ -17,10 +17,16 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- jQuery UI library -->
+  <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+  <!-- jQuery UI CSS -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
 {% endblock head %}
 
 {% block body %}
   <div id="calendar-container">
+    <div id="dialog"></div>
     <div id='calendar'></div>
     {% if perms.reservation.add_reservation or perms.reservation.add_reservation_self_team %}
       <div class="card my-3">
@@ -40,12 +46,12 @@
               <label class="control-label">room: </label>
                 {{ form.room }}
             </div>
-            {% if 'reservation.add_reservation' in perms %}
             <div class="mb-3">
+            {% if perms.reservation.add_reservation %}
               <label class="control-label">team: </label>
+            {% endif %}
                 {{ form.team }}
             </div>
-            {% endif %}
             <div class="mb-3">
               <label class="control-label">note: </label>
               {{ form.note }}
@@ -81,17 +87,13 @@
         crossorigin="anonymous">
   </script>
   <script type="text/javascript">
+    var delete_perm = {{ perms.reservation.delete_reservation|lower }};
     $(document).ready(function() {
     const roomInput = document.getElementById('reserve-room');
       $('#calendar').fullCalendar({
-        timeZone: 'UTC+3:30',
+        timezone: 'UTC+3:30',
         allDaySlot: false,
         defaultView: 'agendaDay',
-<!--        header: {-->
-<!--          left: 'prev,next today',-->
-<!--          center: 'title',-->
-<!--          right: 'agendaDay,agendaWeek'-->
-<!--        },-->
         minTime: '07:00:00',
         maxTime: '22:00:00',
         selectable: true,
@@ -134,17 +136,7 @@
         },
 
         eventClick: function(event) {
-          // Handle event click here
-          console.log('Event click:', event);
-        },
-
-        viewRender: function(view, element) {
-          // Attach click event listener to resource elements
-          $('.fc-resource-cell').on('click', function() {
-            var resourceId = $(this).data('resource-id');
-            // Perform desired actions with the resourceId
-            console.log("Clicked resource ID: " + resourceId);
-          });
+          openDialog(event);
         },
 
         dayClick: function(date, jsEvent, view) {
@@ -172,11 +164,12 @@
             endTimePicker.setDate(desiredTime);
           }
         },
-
         validRange: function(nowDate) {
+          var nowDate = nowDate.clone().startOf('day');
+          console.log(nowDate);
           return {
-            start: nowDate.clone(),
-            end: nowDate.clone().add(7, 'days')
+            start: nowDate.clone().startOf('day'),
+            end: nowDate.clone().startOf('day').add(7, 'days')
           };
         },
 
@@ -188,6 +181,10 @@
               end: selectInfo.end,
               id: selectInfo.resourceId
             };
+            var now = moment();
+            if (selectedEvent.end.isBefore(now)) {
+              return false;
+            }
             for (var i = 0; i < events.length; i++) {
               var event = events[i];
               if (event.resourceId === selectedEvent.id && event.start.isBefore(selectedEvent.end) && event.end.isAfter(selectedEvent.start)) {
@@ -196,20 +193,6 @@
             }
             return true;
         },
-
-        viewSkeletonRender: function(info) {
-          console.log('viewSkeletonRender:', info.event);
-          var selectedRoom = document.getElementById('room-filter').value;
-          var resources = calendar.getResources();
-
-          resources.forEach(function(resource) {
-            if (resource.id === selectedRoom || !selectedRoom) {
-              resource.el.style.display = ''; // Show the selected room column or all columns
-            } else {
-              resource.el.style.display = 'none'; // Hide other columns
-            }
-          });
-        }
       });
       // Fetch events when the next button is clicked
         $('.fc-next-button').on('click', function() {
@@ -248,6 +231,73 @@
       minTime: "07:10",
       maxTime: "22:00",
     });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function openDialog(event) {
+      var dialog = document.getElementById('dialog');
+      var reservationId = event.id;
+      var buttons = [
+        {
+          text: 'Cancel',
+          click: function() {
+            $(dialog).dialog('close');
+          }
+        }
+      ];
+      if (delete_perm) {
+        buttons.unshift({
+          text: 'Delete',
+          class: 'delete-button',
+          click: function() {
+            var url = '/reservation/'+reservationId+'/delete';
+            window.location.href = url;
+<!--            $.ajax({-->
+<!--              url: '/reservation/'+reservationId+'/delete',-->
+<!--              type: 'POST',-->
+<!--              headers: {-->
+<!--                'Content-Type': 'application/json',-->
+<!--                'X-CSRFToken': getCookie('csrftoken')-->
+<!--              },-->
+<!--              success: function(response) {-->
+<!--                calendar.fullCalendar('refetchEvents');-->
+<!--              },-->
+<!--              error: function(xhr, status, error) {-->
+<!--                console.log('Error:', error);-->
+<!--              }-->
+<!--            });-->
+            $(dialog).dialog('close');
+          }
+        });
+      }
+      dialog.innerHTML = '<p>Room: ' + event.title + '</p>' +
+                              '<p>Team: ' + event.title + '</p>' +
+                              '<p>Reserver: ' + event.extendedProps.reserver + '</p>' +
+                              '<p>Note: ' + event.extendedProps.note + '</p>' +
+                              '<p>Start Time: ' + event.start.format('YYYY-MM-DD HH:mm') + '</p>' +
+                              '<p>End Time: ' + event.end.format('YYYY-MM-DD HH:mm') + '</p>';
+
+      $(dialog).dialog({
+        modal: false,
+        title: 'Reservation for ' + event.title,
+        width: 400,
+        height: 300,
+        buttons: buttons
+      });
+    }
   </script>
 
   {% endblock body %}

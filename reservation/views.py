@@ -93,15 +93,20 @@ class ReservationListJson(LoginRequiredMixin, View):
         events = [
             {
                 "id": reservation.id,
-                "title": reservation.note,
+                "title": reservation.team.name,
                 "start": reservation.start_date.isoformat(),
                 "end": reservation.end_date.isoformat(),
                 "resourceId": reservation.room.id,
+                "extendedProps": {
+                    "note": reservation.note,
+                    "reserver": reservation.reserver_user.username,
+                },
                 "backgroundColor": "green",
                 "borderColor": "green",
             }
             for reservation in reservations
         ]
+        print(events)
         return JsonResponse({"events": events}, safe=False)
 
 
@@ -118,7 +123,7 @@ class ReservationListView(UserPassesTestMixin, View):
         return True
 
     def get_data(self, request):
-        resources = Room.objects.all()
+        resources = Room.objects.filter(is_active=True)
         resources = [{"id": room.id, "title": room.name} for room in resources]
         return resources
 
@@ -137,7 +142,9 @@ class ReservationListView(UserPassesTestMixin, View):
     def post(self, request, *args, **kwargs):
         form = ReservationForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
+            room = form.cleaned_data.get("room")
+            if room.is_active:
+                form.save()
         data = self.get_data(request)
         context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)

@@ -87,7 +87,7 @@ class ReservationForm(forms.ModelForm):
                     "id": "reserve-team",
                     "name": "reserve-team",
                     "class": "form-control",
-                    "style": "width: 100px;",
+                    "style": "width: 160px;",
                 }
             ),
             "room": forms.Select(
@@ -95,7 +95,7 @@ class ReservationForm(forms.ModelForm):
                     "id": "reserve-room",
                     "name": "reserve-room",
                     "class": "form-control",
-                    "style": "width: 100px;",
+                    "style": "width: 160px;",
                 }
             ),
         }
@@ -103,7 +103,7 @@ class ReservationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        if not self.user.has_perm("redervation:add_reservation"):
+        if not self.user.has_perm("reservation.add_reservation"):
             self.fields["team"].widget = forms.HiddenInput(attrs={"id": "reserve-team", "name": "reserve-team"})
 
     def clean_reserver_user(self):
@@ -111,9 +111,9 @@ class ReservationForm(forms.ModelForm):
 
     def clean_team(self):
         team = self.cleaned_data.get("team")
-        if self.user.has_perm("reservation:reservation_add"):
+        if self.user.has_perm("reservation.add_reservation"):
             pass
-        elif self.user.has_perm("reservation:reservation_add_self_team"):
+        elif self.user.has_perm("reservation.add_reservation_self_team"):
             team = self.user.team
         else:
             team = None
