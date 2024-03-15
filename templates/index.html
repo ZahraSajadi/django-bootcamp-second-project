@@ -1,41 +1,21 @@
 {% extends '_base.html' %}
 
 {% block body %}
-<div class="container p-4">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="text-center mb-4">Upcoming Meetings</h2>
-            {% for reservation in object_list %}
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        {{ reservation }}
-                    </div>
-                    {% if not reservation.room.is_active %}
-                    <div>
-                        <span class="text-danger">X Room Not Available Right Now</span>
-                    </div>
-                    {% else %}
-                    <div>
-                        <span class="text-success">&#x2713; Room Available</span>
-                    </div>
-                    {% endif %}
-                    <div>
-                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url 'reservation:room_detail' reservation.room.id %}'" class="btn btn-sm btn-primary">
-                            Room Detail
-                        </button>
-                        {% if perms.reservation.delete_reservation or perms.reservation.delete_reservation_self_team %}
-                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url 'reservation:reservation_delete' reservation.id %}'" class="btn btn-sm btn-danger ml-2">
-                            Delete
-                        </button>
-                        {% endif %}
-                    </div>
-                </li>
-            </ul>
-            {% endfor %}
-        </div>
-    </div>
-</div>
+
+<ul>
+    {% for reservation in object_list %}
+        <p>
+            <li>
+                {{reservation}}
+                {% if perms.reservation.delete_reservation or perms.reservation.delete_reservation_self_team%}
+                    <button style="margin:10px;" onclick="location.href='{% url "reservation:reservation_delete" reservation.id%}'">Delete</button>
+                {% endif %}
+            </li>
+        </p>
+    {% endfor %}
+</ul>
+
+<button style="margin-top:10px;" onclick="location.href='{% url "index" %}'">Reservation</button>
 
 {% endblock %}
 {% block dashboard_button %}{% endblock dashboard_button %}

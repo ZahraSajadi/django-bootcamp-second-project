@@ -1,48 +1,32 @@
-{% extends '_base.html' %}
-
-{% block title %}{{ room.name }}{% endblock %}
-
+{% extends '_base.html' %} {% block title %}{{room.name}}{% endblock %}
 {% block body %}
-<div class="container p-4">
-    <div class="row">
-        <div class="col-12">
-            <h1>{{ room.name }}</h1>
-            <p>Capacity: {{ room.capacity }}</p>
-            <p>Description: {{ room.description }}</p>
-            <p>Status: {% if room.is_active %}Available{% else %}Not Available{% endif %}</p>
-            <p>Rating: {{ rate }}</p>
+<h1>{{ room.name }}</h1>
+<p>Capacity: {{ room.capacity }}</p>
+<p>Description: {{ room.description }}</p>
+<p>
+  Status: {% if room.is_active %}Available{% else %}Not Available{% endif %}
+</p>
+<p>Rating: {{ rate }}</p>
 
-            <h2>Comments:</h2>
-            <ul class="list-group">
-                {% for comment in comments %}
-                    <li class="list-group-item">
-                        {{ comment.content }} - {{ comment.user }} - {{ comment.created_at }}
-                    </li>
-                {% endfor %}
-            </ul>
+<h2>Comments:</h2>
+{% for comment in comments %}
+<p>{{ comment.content }} - {{ comment.user }} - {{ comment.created_at }}</p>
+{% endfor %} {% if user.is_authenticated %}
+<h2>Submit Rating</h2>
+<form
+  action="{% url 'reservation:submit_rating' room_id=room_id %}"
+  method="post"
+>
+  {% csrf_token %} {{ rating_form.as_p }}
+  <button type="submit">Submit Rate</button>
+</form>
 
-            {% if user.is_authenticated %}
-            <h2>Submit Rating</h2>
-            <form action="{% url 'reservation:submit_rating' room_id=room_id %}" method="post">
-                {% csrf_token %}
-                {{ rating_form.as_p }}
-                <button type="submit" class="btn btn-primary btn-sm">Submit Rate</button>
-            </form>
-
-            <h2>Add a Comment:</h2>
-            <form action="{% url 'reservation:submit_comment' room_id=room_id %}" method="post">
-                {% csrf_token %}
-                {{ comment_form.as_p }}
-                <button type="submit" class="btn btn-primary btn-sm">Submit Comment</button>
-            </form>
-            {% endif %}
-            {% if perms.reservation.change_room %}
-            <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "reservation:room_update" room.id %}'" class="btn btn-primary btn-sm">Edit Room</button>
-            {% endif %}
-            {% if perms.reservation.delete_room %}
-            <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "reservation:room_delete" room.id %}'" class="btn btn-danger btn-sm">Delete</button>
-            {% endif %}
-        </div>
-    </div>
-</div>
-{% endblock %}
+<h2>Add a Comment:</h2>
+<form
+  action="{% url 'reservation:submit_comment' room_id=room_id %}"
+  method="post"
+>
+  {% csrf_token %} {{ comment_form.as_p }}
+  <button type="submit">Submit Comment</button>
+</form>
+{% endif %} {% endblock body %}
