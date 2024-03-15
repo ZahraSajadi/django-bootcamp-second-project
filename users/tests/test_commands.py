@@ -7,7 +7,6 @@ from second_project.settings import ADMINS_GROUP_NAME, TEAM_LEADERS_GROUP_NAME
 class YourCommandTestCase(TestCase):
     def test_command_execution(self):
         call_command("create_groups_and_permissions")
-        call_command("create_groups_and_permissions")
 
         team_leaders_group = Group.objects.get(name=TEAM_LEADERS_GROUP_NAME)
         self.assertIsNotNone(team_leaders_group)

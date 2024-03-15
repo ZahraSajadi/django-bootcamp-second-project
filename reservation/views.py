@@ -76,7 +76,7 @@ class RoomListView(PermissionRequiredMixin, ListView):
 
 
 class RoomCreateView(PermissionRequiredMixin, CreateView):
-    permission_required = "reservation.change_room"
+    permission_required = "reservaion.change_room"
     model = Room
     template_name = "reservation/room_create.html"
     form_class = RoomCreateForm
@@ -84,7 +84,7 @@ class RoomCreateView(PermissionRequiredMixin, CreateView):
 
 
 class RoomUpdateView(PermissionRequiredMixin, UpdateView):
-    permission_required = "reservation.change_room"
+    permission_required = "reservaion.change_room"
     model = Room
     template_name = "reservation/room_update.html"
     form_class = RoomCreateForm
@@ -92,13 +92,13 @@ class RoomUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class RoomDeleteView(PermissionRequiredMixin, DeleteView):
-    permission_required = "reservation.delete_room"
+    permission_required = "reservaion.delete_room"
     model = Room
     success_url = reverse_lazy("reservation:room_list")
     template_name = "shared/confirm_delete.html"
 
 
-class ReservationListJson(View):
+class ReservationListJson(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         today = datetime.datetime.now().date()
         date = request.GET.get("date")
@@ -108,15 +108,10 @@ class ReservationListJson(View):
         events = [
             {
                 "id": reservation.id,
-                "title": reservation.team.name,
-                "room": reservation.room.name,
+                "title": reservation.note,
                 "start": reservation.start_date.isoformat(),
                 "end": reservation.end_date.isoformat(),
                 "resourceId": reservation.room.id,
-                "extendedProps": {
-                    "note": reservation.note,
-                    "reserver": reservation.reserver_user.username,
-                },
                 "backgroundColor": "green",
                 "borderColor": "green",
             }
@@ -137,34 +132,28 @@ class ReservationListView(UserPassesTestMixin, View):
             return False
         return True
 
-    def get_data(self):
-        resources = Room.objects.filter(is_active=True)
+    def get_data(self, request):
+        resources = Room.objects.all()
         resources = [{"id": room.id, "title": room.name} for room in resources]
         return resources
 
     def get(self, request, *args, **kwargs):
-        data = self.get_data()
-        team = None
-
-        if self.request.user.has_perm("reservation.add_reservation"):
+        if self.request.user.has_perm("reservation:add_reservation"):
             team = Team.objects.all()
-        elif self.request.user.has_perm("reservation.add_reservation_self_team"):
-            team = request.user.team
-
-        if team:
-            form = ReservationForm(
-                initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
-            )
-            context = {"resources": data, "form": form, "user": request.user}
         else:
-            context = {"resources": data, "user": request.user}
+            team = request.user.team
+        form = ReservationForm(
+            initial={"team": team, "room": Room.objects.all(), "reserver_user": request.user}, user=request.user
+        )
+        data = self.get_data(request)
+        context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 
     def post(self, request, *args, **kwargs):
         form = ReservationForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
-        data = self.get_data()
+        data = self.get_data(request)
         context = {"resources": data, "form": form, "user": request.user}
         return render(request, "reservation/reservation_list.html", context=context)
 

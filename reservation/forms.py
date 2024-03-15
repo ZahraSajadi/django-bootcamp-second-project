@@ -88,7 +88,7 @@ class ReservationForm(forms.ModelForm):
                     "id": "reserve-team",
                     "name": "reserve-team",
                     "class": "form-control",
-                    "style": "width: 160px;",
+                    "style": "width: 100px;",
                 }
             ),
             "room": forms.Select(
@@ -96,7 +96,7 @@ class ReservationForm(forms.ModelForm):
                     "id": "reserve-room",
                     "name": "reserve-room",
                     "class": "form-control",
-                    "style": "width: 160px;",
+                    "style": "width: 100px;",
                 }
             ),
         }
@@ -104,23 +104,17 @@ class ReservationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        if not self.user.has_perm("reservation.add_reservation"):
+        if not self.user.has_perm("redervation:add_reservation"):
             self.fields["team"].widget = forms.HiddenInput(attrs={"id": "reserve-team", "name": "reserve-team"})
 
     def clean_reserver_user(self):
         return self.user
 
-    def clean_room(self):
-        room = self.cleaned_data.get("room")
-        if room.is_active:
-            return room
-        return None
-
     def clean_team(self):
         team = self.cleaned_data.get("team")
-        if self.user.has_perm("reservation.add_reservation"):
+        if self.user.has_perm("reservation:reservation_add"):
             pass
-        elif self.user.has_perm("reservation.add_reservation_self_team"):
+        elif self.user.has_perm("reservation:reservation_add_self_team"):
             team = self.user.team
         else:
             team = None
@@ -154,8 +148,8 @@ class ReservationForm(forms.ModelForm):
                     | Q(end_date__range=(start + timedelta(seconds=1), end))
                 )
             ).all()
-            # for reservation in overlapping_reservations:
-            #     print(reservation)
+            for reservation in overlapping_reservations:
+                print(reservation)
         if overlapping_reservations:
             raise forms.ValidationError("Overlapping Reservation!")
         return cleaned_data

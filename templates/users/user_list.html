@@ -12,7 +12,7 @@
                         Id: {{ user.id }} - Full Name: {{ user }} - Email: {{ user.email }} - Phone: {{ user.phone }} - Is Admin: {{user.is_staff}} - Is Super User: {{user.is_superuser}}
                     </div>
                     <div>
-                        <button style="margin-top:10px;margin-bottom:10px;" onclick="location.href='{% url "users:user_update" user.id %}'" class="btn btn-sm btn-primary">
+                        <button style="margin:10px;" onclick="location.href='{% url "users:user_update" user.id %}'" class="btn btn-sm btn-primary">
                             Details
                         </button>
                     </div>
